@@ -11,8 +11,14 @@ export const meta = () => [
   { name: "keywords", content: "komunitas developer madura, bangkalan dev, sampang dev, pamekasan dev, sumenep dev, komunitas programmer madura, peta komunitas madura" },
   { property: "og:title", content: "Komunitas Developer Madura - MaduraDev" },
   { property: "og:description", content: "Jelajahi semua komunitas developer yang tersebar di 4 kabupaten Pulau Madura." },
-  { property: "og:image", content: "/image.jpg" },
+  { property: "og:type", content: "website" },
+  { property: "og:url", content: "https://madura.dev/community" },
+  { property: "og:image", content: "https://madura.dev/image.jpg" },
   { name: "twitter:card", content: "summary_large_image" },
+  { name: "twitter:title", content: "Komunitas Developer Madura - MaduraDev" },
+  { name: "twitter:description", content: "Jelajahi semua komunitas developer yang tersebar di 4 kabupaten Pulau Madura." },
+  { name: "twitter:image", content: "https://madura.dev/image.jpg" },
+  { tagName: "link", rel: "canonical", href: "https://madura.dev/community" },
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -47,8 +53,37 @@ export default function CommunityPage() {
   const grouped = groupCommunitiesByRegion(communities);
   const regionEntries = Object.entries(grouped);
 
+  const communityItemListJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Komunitas Developer Madura",
+    description: "Daftar komunitas developer yang tersebar di 4 kabupaten Pulau Madura.",
+    url: "https://madura.dev/community",
+    itemListElement: communities.map((comm, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "Organization",
+        name: comm.name,
+        description: `Komunitas developer ${comm.name} di ${comm.region}, Madura.`,
+        url: comm.instagram || "https://madura.dev/community",
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: comm.region,
+          addressRegion: "Jawa Timur",
+          addressCountry: "ID",
+        },
+      },
+    })),
+  };
+
   return (
     <div className="pt-20">
+      {/* Schema.org Community List JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(communityItemListJsonLd) }}
+      />
       {/* Hero Section */}
       <section className="relative py-16 md:py-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />

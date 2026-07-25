@@ -26,8 +26,14 @@ export const meta = () => [
   { name: "keywords", content: "twibbon maduradev, twibbon developer madura, frame foto komunitas madura" },
   { property: "og:title", content: "Twibbon - MaduraDev" },
   { property: "og:description", content: "Download twibbon MaduraDev untuk mendukung komunitas developer Madura." },
-  { property: "og:image", content: "/image.jpg" },
+  { property: "og:type", content: "website" },
+  { property: "og:url", content: "https://madura.dev/twibbon" },
+  { property: "og:image", content: "https://madura.dev/image.jpg" },
   { name: "twitter:card", content: "summary_large_image" },
+  { name: "twitter:title", content: "Twibbon - MaduraDev" },
+  { name: "twitter:description", content: "Download twibbon MaduraDev untuk mendukung komunitas developer Madura." },
+  { name: "twitter:image", content: "https://madura.dev/image.jpg" },
+  { tagName: "link", rel: "canonical", href: "https://madura.dev/twibbon" },
 ];
 
 export default function TwibbonPage() {

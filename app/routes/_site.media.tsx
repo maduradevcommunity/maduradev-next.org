@@ -13,9 +13,13 @@ export const meta: Route.MetaFunction = () => [
   { name: "keywords", content: "blog developer madura, kabar maduradev, tutorial programming, komunitas programmer madura" },
   { property: "og:title", content: "Media - MaduraDev" },
   { property: "og:description", content: "Kabar kegiatan komunitas developer Madura dan Blog teknis/tutorial programming." },
-  { property: "og:image", content: "/image.jpg" },
+  { property: "og:type", content: "website" },
+  { property: "og:image", content: "https://madura.dev/image.jpg" },
   { property: "og:url", content: "https://madura.dev/media" },
   { name: "twitter:card", content: "summary_large_image" },
+  { name: "twitter:title", content: "Media - MaduraDev" },
+  { name: "twitter:description", content: "Kabar kegiatan komunitas developer Madura dan Blog teknis/tutorial programming." },
+  { name: "twitter:image", content: "https://madura.dev/image.jpg" },
   {
     tagName: "link",
     rel: "canonical",
@@ -77,8 +81,43 @@ export default function MediaPage({ loaderData }: Route.ComponentProps) {
     return filteredPosts;
   }, [filteredPosts, activeFilter, featuredPost]);
 
+  const mediaItemListJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "MaduraDev Media & Blog",
+    description: "Kabar kegiatan komunitas developer Madura dan Blog teknis/tutorial programming.",
+    url: "https://madura.dev/media",
+    itemListElement: posts.map((post, index) => {
+      const fullImageUrl = post.image_url
+        ? (post.image_url.startsWith("http") ? post.image_url : `https://madura.dev${post.image_url.startsWith("/") ? "" : "/"}${post.image_url}`)
+        : undefined;
+
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "BlogPosting",
+          headline: post.title,
+          description: post.summary,
+          url: `https://madura.dev/media/${post.slug}`,
+          datePublished: post.created_at,
+          ...(fullImageUrl ? { image: [fullImageUrl] } : {}),
+          author: {
+            "@type": "Person",
+            name: post.author?.name || "Tim MaduraDev",
+          },
+        },
+      };
+    }),
+  };
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden pt-28 pb-16">
+      {/* Schema.org Media ItemList JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(mediaItemListJsonLd) }}
+      />
       {/* Background Glows */}
       <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl pointer-events-none z-0" />
       <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-secondary/5 rounded-full blur-3xl pointer-events-none z-0" />

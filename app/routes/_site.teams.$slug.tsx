@@ -3,19 +3,30 @@ import TeamDetailClient from "@/components/teams/TeamDetailClient";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPlaceholderAvatarUrl } from "@/lib/placeholder";
 
-export const meta = ({ data }: Route.MetaArgs) => {
+export const meta = ({ data, params }: Route.MetaArgs) => {
   const member = data?.member;
+  const canonicalUrl = `https://madura.dev/teams/${params.slug}`;
+  const avatarUrl = member?.avatar_url
+    ? (member.avatar_url.startsWith("http") ? member.avatar_url : `https://madura.dev${member.avatar_url.startsWith("/") ? "" : "/"}${member.avatar_url}`)
+    : "https://madura.dev/image.jpg";
+  const desc = member
+    ? `${member.name} - ${member.position} di MaduraDev. ${member.description || ""}`
+    : "Profil anggota tim inti MaduraDev.";
+  const title = member ? `${member.name} - Core Team MaduraDev` : "Team - MaduraDev";
+
   return [
-    { title: member ? `${member.name} - Core Team MaduraDev` : "Team - MaduraDev" },
-    {
-      name: "description",
-      content: member
-        ? `${member.name} - ${member.position} di MaduraDev. ${member.description || ""}`
-        : "Profil anggota tim inti MaduraDev.",
-    },
-    { property: "og:title", content: member ? `${member.name} - MaduraDev` : "Team - MaduraDev" },
-    { property: "og:image", content: member?.avatar_url || "/image.jpg" },
+    { title },
+    { name: "description", content: desc },
+    { property: "og:title", content: title },
+    { property: "og:description", content: desc },
+    { property: "og:type", content: "profile" },
+    { property: "og:url", content: canonicalUrl },
+    { property: "og:image", content: avatarUrl },
     { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: title },
+    { name: "twitter:description", content: desc },
+    { name: "twitter:image", content: avatarUrl },
+    { tagName: "link", rel: "canonical", href: canonicalUrl },
   ];
 };
 
@@ -74,11 +85,37 @@ export async function loader({ params }: Route.LoaderArgs) {
   };
 }
 
-export default function TeamDetailPage({ loaderData }: Route.ComponentProps) {
+export default function TeamDetailPage({ loaderData, params }: Route.ComponentProps) {
   const { member, prevMember, nextMember } = loaderData;
+
+  const personJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: member.name,
+    jobTitle: member.position,
+    description: member.description,
+    image: member.avatar_url,
+    url: `https://madura.dev/teams/${params.slug}`,
+    sameAs: [
+      member.github,
+      member.linkedin,
+      member.instagram,
+      member.portfolio,
+    ].filter(Boolean),
+    worksFor: {
+      "@type": "Organization",
+      name: "MaduraDev",
+      url: "https://madura.dev",
+    },
+  };
 
   return (
     <div className="pt-5">
+      {/* Schema.org Person JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+      />
       <TeamDetailClient member={member} prevMember={prevMember} nextMember={nextMember} />
     </div>
   );

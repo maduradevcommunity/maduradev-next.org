@@ -20,8 +20,14 @@ export const meta = () => [
     property: "og:description",
     content: "Kenali tim inti di balik komunitas developer MaduraDev.",
   },
-  { property: "og:image", content: "/image.jpg" },
+  { property: "og:type", content: "website" },
+  { property: "og:url", content: "https://madura.dev/teams" },
+  { property: "og:image", content: "https://madura.dev/image.jpg" },
   { name: "twitter:card", content: "summary_large_image" },
+  { name: "twitter:title", content: "Core Team - MaduraDev" },
+  { name: "twitter:description", content: "Kenali tim inti di balik komunitas developer MaduraDev." },
+  { name: "twitter:image", content: "https://madura.dev/image.jpg" },
+  { tagName: "link", rel: "canonical", href: "https://madura.dev/teams" },
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -57,8 +63,37 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function TeamsPage({ loaderData }: Route.ComponentProps) {
   const { members } = loaderData;
 
+  const teamItemListJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Core Team MaduraDev",
+    description: "Tim inti di balik komunitas developer MaduraDev.",
+    url: "https://madura.dev/teams",
+    itemListElement: members.map((m, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "Person",
+        name: m.name,
+        jobTitle: m.position,
+        description: m.description,
+        image: m.avatar_url,
+        worksFor: {
+          "@type": "Organization",
+          name: "MaduraDev",
+          url: "https://madura.dev",
+        },
+      },
+    })),
+  };
+
   return (
     <div className="pt-5">
+      {/* Schema.org Team List JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(teamItemListJsonLd) }}
+      />
       <TeamClient members={members} />
     </div>
   );

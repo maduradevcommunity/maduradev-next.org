@@ -10,8 +10,14 @@ export const meta: Route.MetaFunction = () => [
   { name: "keywords", content: "event developer madura, workshop programming madura, webinar developer, bootcamp coding madura" },
   { property: "og:title", content: "Events - MaduraDev" },
   { property: "og:description", content: "Workshop, webinar, bootcamp, dan bincang-bincang untuk developer Madura." },
-  { property: "og:image", content: "/image.jpg" },
+  { property: "og:type", content: "website" },
+  { property: "og:url", content: "https://madura.dev/events" },
+  { property: "og:image", content: "https://madura.dev/image.jpg" },
   { name: "twitter:card", content: "summary_large_image" },
+  { name: "twitter:title", content: "Events - MaduraDev" },
+  { name: "twitter:description", content: "Workshop, webinar, bootcamp, dan bincang-bincang untuk developer Madura." },
+  { name: "twitter:image", content: "https://madura.dev/image.jpg" },
+  { tagName: "link", rel: "canonical", href: "https://madura.dev/events" },
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -32,8 +38,77 @@ const headerVariants: Variants = {
 export default function EventsPage({ loaderData }: Route.ComponentProps) {
   const { events } = loaderData;
 
+  const eventsItemListJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "MaduraDev Events",
+    description: "Daftar workshop, webinar, bootcamp, dan bincang-bincang untuk developer Madura.",
+    url: "https://madura.dev/events",
+    itemListElement: events.map((event, index) => {
+      let startDateISO = event.event_date;
+      if (event.event_date) {
+        const timeMatch = event.event_time?.match(/(\d{1,2}):(\d{2})/);
+        if (timeMatch) {
+          const hh = timeMatch[1].padStart(2, "0");
+          const mm = timeMatch[2];
+          startDateISO = `${event.event_date}T${hh}:${mm}:00+07:00`;
+        } else {
+          startDateISO = `${event.event_date}T00:00:00+07:00`;
+        }
+      }
+
+      const cleanLocation = event.location ? event.location.replace(/<[^>]*>?/gm, "").trim() : "";
+      const fullImageUrl = event.image
+        ? (event.image.startsWith("http") ? event.image : `https://madura.dev${event.image.startsWith("/") ? "" : "/"}${event.image}`)
+        : undefined;
+
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "Event",
+          name: event.title,
+          description: event.description_small,
+          startDate: startDateISO,
+          eventStatus: "https://schema.org/EventScheduled",
+          eventAttendanceMode: event.online
+            ? "https://schema.org/OnlineEventAttendanceMode"
+            : "https://schema.org/OfflineEventAttendanceMode",
+          location: event.online
+            ? {
+              "@type": "VirtualLocation",
+              url: `https://madura.dev/events/${event.slug}`,
+            }
+            : {
+              "@type": "Place",
+              name: cleanLocation || "Madura",
+              address: {
+                "@type": "PostalAddress",
+                addressLocality: "Madura",
+                addressRegion: "Jawa Timur",
+                addressCountry: "ID",
+              },
+            },
+          organizer: {
+            "@type": "Organization",
+            name: "MaduraDev",
+            url: "https://madura.dev",
+          },
+          ...(fullImageUrl ? { image: [fullImageUrl] } : {}),
+          url: `https://madura.dev/events/${event.slug}`,
+        },
+      };
+    }),
+  };
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden pt-28 pb-16">
+      {/* Schema.org Event List JSON-LD for Google Search Console */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventsItemListJsonLd) }}
+      />
+
       {/* Background Glows */}
       <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl pointer-events-none z-0" />
       <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-secondary/5 rounded-full blur-3xl pointer-events-none z-0" />

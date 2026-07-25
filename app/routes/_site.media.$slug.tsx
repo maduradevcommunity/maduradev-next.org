@@ -17,6 +17,10 @@ import { Button } from "@/components/ui/button";
 export const meta: Route.MetaFunction = ({ data }) => {
   if (!data?.post) return [{ title: "Artikel tidak ditemukan" }];
   const post = data.post;
+  const imageUrl = post.image_url
+    ? (post.image_url.startsWith("http") ? post.image_url : `https://madura.dev${post.image_url.startsWith("/") ? "" : "/"}${post.image_url}`)
+    : undefined;
+
   return [
     { title: `${post.title} - MaduraDev` },
     { name: "description", content: post.summary },
@@ -28,15 +32,11 @@ export const meta: Route.MetaFunction = ({ data }) => {
     { property: "og:description", content: post.summary },
     { property: "og:type", content: "article" },
     { property: "og:url", content: `https://madura.dev/media/${post.slug}` },
-    ...(post.image_url
-      ? [{ property: "og:image", content: post.image_url }]
-      : []),
+    ...(imageUrl ? [{ property: "og:image", content: imageUrl }] : []),
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: post.title },
     { name: "twitter:description", content: post.summary },
-    ...(post.image_url
-      ? [{ name: "twitter:image", content: post.image_url }]
-      : []),
+    ...(imageUrl ? [{ name: "twitter:image", content: imageUrl }] : []),
     {
       tagName: "link",
       rel: "canonical",
