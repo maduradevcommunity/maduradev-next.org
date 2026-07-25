@@ -27,6 +27,7 @@ export const meta: Route.MetaFunction = ({ data }) => {
     { property: "og:title", content: `${post.title} - MaduraDev Media` },
     { property: "og:description", content: post.summary },
     { property: "og:type", content: "article" },
+    { property: "og:url", content: `https://madura.dev/media/${post.slug}` },
     ...(post.image_url
       ? [{ property: "og:image", content: post.image_url }]
       : []),
@@ -36,6 +37,11 @@ export const meta: Route.MetaFunction = ({ data }) => {
     ...(post.image_url
       ? [{ name: "twitter:image", content: post.image_url }]
       : []),
+    {
+      tagName: "link",
+      rel: "canonical",
+      href: `https://madura.dev/media/${post.slug}`,
+    },
   ];
 };
 
@@ -62,6 +68,40 @@ export default function MediaDetailPage() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden pt-28 pb-16">
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": post.type === "blog" ? "BlogPosting" : "NewsArticle",
+            headline: post.title,
+            image: post.image_url ? [post.image_url] : ["https://madura.dev/image.jpg"],
+            datePublished: post.published_at || post.created_at,
+            dateModified: post.updated_at || post.published_at || post.created_at,
+            author: [
+              {
+                "@type": "Person",
+                name: post.author?.name || "MaduraDev",
+                url: "https://madura.dev",
+              },
+            ],
+            publisher: {
+              "@type": "Organization",
+              name: "MaduraDev",
+              logo: {
+                "@type": "ImageObject",
+                url: "https://madura.dev/image.jpg",
+              },
+            },
+            description: post.summary,
+            mainEntityOfPage: {
+              "@type": "WebPage",
+              "@id": `https://madura.dev/media/${post.slug}`,
+            },
+          }),
+        }}
+      />
       {/* Background Glows */}
       <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl pointer-events-none z-0" />
       <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-secondary/5 rounded-full blur-3xl pointer-events-none z-0" />

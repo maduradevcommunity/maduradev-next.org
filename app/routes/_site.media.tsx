@@ -14,7 +14,13 @@ export const meta: Route.MetaFunction = () => [
   { property: "og:title", content: "Media - MaduraDev" },
   { property: "og:description", content: "Kabar kegiatan komunitas developer Madura dan Blog teknis/tutorial programming." },
   { property: "og:image", content: "/image.jpg" },
+  { property: "og:url", content: "https://madura.dev/media" },
   { name: "twitter:card", content: "summary_large_image" },
+  {
+    tagName: "link",
+    rel: "canonical",
+    href: "https://madura.dev/media",
+  },
 ];
 
 export async function loader() {

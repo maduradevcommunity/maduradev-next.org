@@ -14,16 +14,35 @@ const STATIC_PAGES = [
 
 export async function loader({ request }: Route.LoaderArgs) {
   // Dynamic event pages
-  let eventSlugs: string[] = [];
+  let eventEntriesData: { slug: string; updated_at: string }[] = [];
   try {
     const adminClient = createAdminClient();
     const { data: events } = await adminClient
       .from("events")
       .select("slug, updated_at")
       .eq("is_published", true);
-    eventSlugs = (events || []).map((e: any) => e.slug);
+    eventEntriesData = (events || []).map((e: any) => ({
+      slug: e.slug,
+      updated_at: e.updated_at || new Date().toISOString(),
+    }));
   } catch (e) {
     console.error("Sitemap: failed to fetch events", e);
+  }
+
+  // Dynamic media pages
+  let mediaEntriesData: { slug: string; updated_at: string }[] = [];
+  try {
+    const adminClient = createAdminClient();
+    const { data: posts } = await adminClient
+      .from("media_posts")
+      .select("slug, updated_at")
+      .eq("status", "published");
+    mediaEntriesData = (posts || []).map((p: any) => ({
+      slug: p.slug,
+      updated_at: p.updated_at || new Date().toISOString(),
+    }));
+  } catch (e) {
+    console.error("Sitemap: failed to fetch media posts", e);
   }
 
   const now = new Date().toISOString();
@@ -38,13 +57,25 @@ export async function loader({ request }: Route.LoaderArgs) {
     </url>`,
   ).join("");
 
-  const eventEntries = eventSlugs
+  const eventEntries = eventEntriesData
     .map(
-      (slug) => `
+      (e) => `
     <url>
-      <loc>${SITE_URL}/events/${slug}</loc>
-      <lastmod>${now}</lastmod>
+      <loc>${SITE_URL}/events/${e.slug}</loc>
+      <lastmod>${new Date(e.updated_at).toISOString()}</lastmod>
       <changefreq>monthly</changefreq>
+      <priority>0.7</priority>
+    </url>`,
+    )
+    .join("");
+
+  const mediaEntries = mediaEntriesData
+    .map(
+      (m) => `
+    <url>
+      <loc>${SITE_URL}/media/${m.slug}</loc>
+      <lastmod>${new Date(m.updated_at).toISOString()}</lastmod>
+      <changefreq>weekly</changefreq>
       <priority>0.7</priority>
     </url>`,
     )
@@ -54,6 +85,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   ${staticEntries}
   ${eventEntries}
+  ${mediaEntries}
 </urlset>`;
 
   return new Response(sitemap, {
