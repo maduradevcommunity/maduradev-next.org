@@ -75,8 +75,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
     if (!regListError && regList) {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      registrationCount = regList.filter((reg) => 
-        reg.status === "confirmed" || 
+      registrationCount = regList.filter((reg) =>
+        reg.status === "confirmed" ||
         (reg.status === "pending_payment" && reg.registered_at > fiveMinutesAgo)
       ).length;
     }
@@ -217,8 +217,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
     if (!countError && regList) {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      const activeCount = regList.filter((reg) => 
-        reg.status === "confirmed" || 
+      const activeCount = regList.filter((reg) =>
+        reg.status === "confirmed" ||
         (reg.status === "pending_payment" && reg.registered_at > fiveMinutesAgo)
       ).length;
 
@@ -260,16 +260,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
     paymentUrl = `https://app.pakasir.com/pay/${projectSlug}/${event.price}?order_id=${newReg.id}&redirect=${encodeURIComponent(redirectUrl)}`;
   }
 
-  return { 
-    success: true, 
-    checkinToken: newReg.checkin_token as string, 
-    paymentUrl 
+  return {
+    success: true,
+    checkinToken: newReg.checkin_token as string,
+    paymentUrl
   };
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data?.event) return [{ title: "Event tidak ditemukan" }];
   const event = data.event;
+  const imageUrl = event.image
+    ? (event.image.startsWith("http") ? event.image : `https://madura.dev${event.image.startsWith("/") ? "" : "/"}${event.image}`)
+    : undefined;
+  const canonicalUrl = `https://madura.dev/events/${event.slug}`;
+
   return [
     { title: `${event.title} - MaduraDev` },
     { name: "description", content: event.description_small },
@@ -277,11 +282,13 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     { property: "og:title", content: `${event.title} - MaduraDev` },
     { property: "og:description", content: event.description_small },
     { property: "og:type", content: "article" },
-    ...(event.image ? [{ property: "og:image", content: event.image }] : []),
+    { property: "og:url", content: canonicalUrl },
+    ...(imageUrl ? [{ property: "og:image", content: imageUrl }] : []),
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: event.title },
     { name: "twitter:description", content: event.description_small },
-    ...(event.image ? [{ name: "twitter:image", content: event.image }] : []),
+    ...(imageUrl ? [{ name: "twitter:image", content: imageUrl }] : []),
+    { tagName: "link", rel: "canonical", href: canonicalUrl },
   ];
 };
 
@@ -449,8 +456,72 @@ export default function DetailEvent() {
     }
   };
 
+  const formatIsoStartDate = (dateStr?: string, timeStr?: string) => {
+    if (!dateStr) return undefined;
+    const timeMatch = timeStr?.match(/(\d{1,2}):(\d{2})/);
+    if (timeMatch) {
+      const hh = timeMatch[1].padStart(2, "0");
+      const mm = timeMatch[2];
+      return `${dateStr}T${hh}:${mm}:00+07:00`;
+    }
+    return `${dateStr}T00:00:00+07:00`;
+  };
+
+  const cleanLocation = event.location ? event.location.replace(/<[^>]*>?/gm, "").trim() : "";
+  const fullImageUrl = event.image
+    ? (event.image.startsWith("http") ? event.image : `https://madura.dev${event.image.startsWith("/") ? "" : "/"}${event.image}`)
+    : undefined;
+
+  const eventJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: event.title,
+    description: event.description_small,
+    startDate: formatIsoStartDate(event.event_date, event.event_time),
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: event.online
+      ? "https://schema.org/OnlineEventAttendanceMode"
+      : "https://schema.org/OfflineEventAttendanceMode",
+    location: event.online
+      ? {
+        "@type": "VirtualLocation",
+        url: `https://madura.dev/events/${event.slug}`,
+      }
+      : {
+        "@type": "Place",
+        name: cleanLocation || "Madura",
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: "Madura",
+          addressRegion: "Jawa Timur",
+          addressCountry: "ID",
+        },
+      },
+    organizer: {
+      "@type": "Organization",
+      name: "MaduraDev",
+      url: "https://madura.dev",
+    },
+    ...(fullImageUrl ? { image: [fullImageUrl] } : {}),
+    offers: {
+      "@type": "Offer",
+      price: event.price && event.price > 0 ? event.price : "0",
+      priceCurrency: "IDR",
+      availability: isCapacityFull
+        ? "https://schema.org/SoldOut"
+        : "https://schema.org/InStock",
+      url: `https://madura.dev/events/${event.slug}`,
+      validFrom: event.event_date,
+    },
+  };
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Schema.org Event JSON-LD for Google Search Console */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd) }}
+      />
       {/* Background Glow */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl pointer-events-none z-0" />
       <div className="absolute top-1/3 right-1/4 w-[300px] h-[300px] bg-secondary/5 rounded-full blur-3xl pointer-events-none z-0" />
@@ -514,10 +585,10 @@ export default function DetailEvent() {
 
         {/* 2-Column Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start mt-8">
-          
+
           {/* Left Column: Image & Description */}
           <div className="lg:col-span-8 space-y-8">
-            
+
             {/* Hero Image Section */}
             <motion.div
               variants={itemVariants}
@@ -555,7 +626,7 @@ export default function DetailEvent() {
 
           {/* Right Column: Sticky Sidebar containing Details & RSVP */}
           <div className="lg:col-span-4 lg:sticky lg:top-28 space-y-6">
-            
+
             {/* Consolidated Event Details Card */}
             <motion.div
               variants={itemVariants}
@@ -564,7 +635,7 @@ export default function DetailEvent() {
               <h3 className="font-bold text-lg text-foreground border-b border-border/40 pb-3 font-display">
                 Informasi Pelaksanaan
               </h3>
-              
+
               <div className="space-y-5">
                 <div className="flex gap-4 items-start">
                   <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/10">
@@ -632,8 +703,8 @@ export default function DetailEvent() {
                         {isPastEvent
                           ? "Pendaftaran sudah ditutup."
                           : isCapacityFull
-                          ? "Kuota pendaftaran sudah penuh."
-                          : "Isi form untuk mendaftar."}
+                            ? "Kuota pendaftaran sudah penuh."
+                            : "Isi form untuk mendaftar."}
                       </p>
                     </div>
                     <div>
@@ -667,9 +738,8 @@ export default function DetailEvent() {
                       {event.max_attendees && (
                         <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                           <div
-                            className={`h-full transition-all duration-500 rounded-full ${
-                              isCapacityFull ? "bg-destructive" : "bg-primary"
-                            }`}
+                            className={`h-full transition-all duration-500 rounded-full ${isCapacityFull ? "bg-destructive" : "bg-primary"
+                              }`}
                             style={{
                               width: `${Math.min(
                                 100,
@@ -984,7 +1054,7 @@ export default function DetailEvent() {
 
                                   if (filtered.length === 0) {
                                     return (
-                                      <div 
+                                      <div
                                         className="px-3 py-2 cursor-pointer hover:bg-accent text-muted-foreground font-medium"
                                         onMouseDown={(e) => {
                                           e.preventDefault();
@@ -1107,10 +1177,10 @@ export default function DetailEvent() {
                               className={actionData?.errors?.kabupaten ? "border-destructive focus-visible:ring-destructive text-sm" : "text-sm"}
                             >
                               <SelectItem value="">
-                                {isLoadingRegencies 
-                                  ? "Memuat Kabupaten/Kota..." 
-                                  : !selectedProvinceId 
-                                    ? "Pilih Provinsi terlebih dahulu" 
+                                {isLoadingRegencies
+                                  ? "Memuat Kabupaten/Kota..."
+                                  : !selectedProvinceId
+                                    ? "Pilih Provinsi terlebih dahulu"
                                     : "-- Pilih Kabupaten/Kota --"}
                               </SelectItem>
                               {regencies.map((reg) => (
