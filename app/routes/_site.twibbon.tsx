@@ -20,9 +20,10 @@ import {
   ChevronRight,
   ShieldCheck,
 } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { Button } from "@/components/ui/button";
 import { createClient as createBrowserClient } from "@/lib/supabase/client";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { toast } from "sonner";
 import { triggerHaptic } from "@/lib/haptics";
 
@@ -83,7 +84,27 @@ export const meta = () => [
 
 export type FrameTemplate = "official" | "cyber" | "minimalist" | "custom";
 
+export async function loader() {
+  const adminClient = createAdminClient();
+  const {
+    data: { publicUrl },
+  } = adminClient.storage.from("images").getPublicUrl("twibbon/template.png");
+
+  let hasCustomTemplate = false;
+  try {
+    const res = await fetch(publicUrl, { method: "HEAD" });
+    if (res.ok) hasCustomTemplate = true;
+  } catch {
+    hasCustomTemplate = false;
+  }
+
+  return {
+    initialCustomTemplateUrl: hasCustomTemplate ? `${publicUrl}?t=${Date.now()}` : null,
+  };
+}
+
 export default function TwibbonPage() {
+  const { initialCustomTemplateUrl } = useLoaderData<typeof loader>();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cameraOverlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -102,11 +123,13 @@ export default function TwibbonPage() {
   const [rawPhoto, setRawPhoto] = useState<string | null>(null);
   const [loadedImage, setLoadedImage] = useState<HTMLImageElement | null>(null);
   const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
-  const [customTemplateUrl, setCustomTemplateUrl] = useState<string | null>(null);
+  const [customTemplateUrl, setCustomTemplateUrl] = useState<string | null>(initialCustomTemplateUrl);
   const [customTemplateImg, setCustomTemplateImg] = useState<HTMLImageElement | null>(null);
 
-  // Selected frame template
-  const [selectedFrame, setSelectedFrame] = useState<FrameTemplate>("official");
+  // Selected frame template - defaults to custom if admin has published one!
+  const [selectedFrame, setSelectedFrame] = useState<FrameTemplate>(
+    initialCustomTemplateUrl ? "custom" : "official"
+  );
 
   // Adjustments: scale, position, rotation, flip
   const [scale, setScale] = useState(1);
@@ -176,7 +199,10 @@ export default function TwibbonPage() {
           const tImg = new Image();
           tImg.crossOrigin = "anonymous";
           tImg.src = url;
-          tImg.onload = () => setCustomTemplateImg(tImg);
+          tImg.onload = () => {
+            setCustomTemplateImg(tImg);
+            setSelectedFrame("custom");
+          };
         } else {
           setCustomTemplateUrl(null);
         }
@@ -571,12 +597,63 @@ export default function TwibbonPage() {
           <h1 className="text-2xl sm:text-3xl font-black text-foreground font-display tracking-tight mb-1">
             MaduraDev <span className="text-primary italic">Twibbon</span>
           </h1>
-          <p className="text-muted-foreground text-xs sm:text-sm max-w-md">
+          <p className="text-muted-foreground text-xs sm:text-sm max-w-md mx-auto">
             {rawPhoto
               ? "Atur posisi, perbesar foto sesuai keinginanmu, dan ganti frame secara instan sebelum didownload."
               : "Pilih desain frame di bawah, lalu ambil foto selfie atau upload foto terbaikmu."}
           </p>
         </div>
+
+        {/* Custom Template Announcement Banner (Notice to users) */}
+        {customTemplateUrl && (
+          <div className="w-full mb-5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-primary/15 via-primary/10 to-card border-2 border-primary/40 backdrop-blur-md flex items-center justify-between gap-3 shadow-md shadow-primary/10 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative w-12 h-12 rounded-xl bg-slate-900 border border-primary/40 overflow-hidden shrink-0 flex items-center justify-center p-0.5 shadow-xs">
+                <img
+                  src={customTemplateUrl}
+                  alt="Thumbnail Template Baru"
+                  className="w-full h-full object-contain"
+                />
+                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                </span>
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs sm:text-sm font-extrabold text-foreground truncate">
+                    Template Event Resmi Tersedia!
+                  </p>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground font-black uppercase tracking-wider shrink-0 shadow-2xs">
+                    Baru
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  Admin telah merilis template khusus untuk kegiatan ini.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              size="sm"
+              variant={selectedFrame === "custom" ? "default" : "outline"}
+              onClick={() => {
+                setSelectedFrame("custom");
+                triggerHaptic("medium");
+              }}
+              className="text-xs font-bold shrink-0 cursor-pointer shadow-xs"
+            >
+              {selectedFrame === "custom" ? (
+                <span className="flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5" /> Digunakan
+                </span>
+              ) : (
+                "Gunakan Frame Ini"
+              )}
+            </Button>
+          </div>
+        )}
 
         {/* 1. PERSISTENT FRAME SELECTOR CARDS (Always Visible & Interactive) */}
         <div className="w-full mb-5">
@@ -586,16 +663,76 @@ export default function TwibbonPage() {
               <span>Pilihan Frame Desain:</span>
             </span>
             <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">
-              {selectedFrame}
+              {selectedFrame === "custom" ? "Template Resmi Acara" : selectedFrame}
             </span>
           </div>
 
           <div className="grid grid-cols-3 gap-2">
+            {/* Custom Community Template (Featured as FIRST option if active) */}
+            {customTemplateUrl && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedFrame("custom");
+                  triggerHaptic("light");
+                }}
+                className={`col-span-3 p-3 rounded-2xl border transition-all text-left flex items-center justify-between gap-3 relative overflow-hidden group cursor-pointer ${
+                  selectedFrame === "custom"
+                    ? "border-primary bg-primary/15 shadow-sm ring-2 ring-primary/40"
+                    : "border-primary/40 bg-card/90 hover:border-primary hover:bg-muted/50"
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative w-11 h-11 rounded-xl bg-slate-900 border border-border/80 overflow-hidden shrink-0 flex items-center justify-center p-0.5 shadow-2xs">
+                    <img
+                      src={customTemplateUrl}
+                      alt="Thumbnail Custom Template"
+                      className="w-full h-full object-contain"
+                    />
+                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                    </span>
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="text-xs font-extrabold text-foreground truncate">
+                        Template Resmi Acara
+                      </p>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-emerald-500/15 text-emerald-500 font-black tracking-wider uppercase border border-emerald-500/30">
+                        Rilis Admin
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      Template khusus dari pengurus komunitas MaduraDev
+                    </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0">
+                  {selectedFrame === "custom" ? (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-primary text-primary-foreground text-xs font-bold shadow-2xs">
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Aktif</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs font-bold text-primary group-hover:underline">
+                      Pilih Frame
+                    </span>
+                  )}
+                </div>
+              </button>
+            )}
+
             {/* Official Theme */}
             <button
               type="button"
-              onClick={() => setSelectedFrame("official")}
-              className={`p-2.5 sm:p-3 rounded-2xl border transition-all text-left flex flex-col justify-between relative overflow-hidden ${
+              onClick={() => {
+                setSelectedFrame("official");
+                triggerHaptic("light");
+              }}
+              className={`p-2.5 sm:p-3 rounded-2xl border transition-all text-left flex flex-col justify-between relative overflow-hidden cursor-pointer ${
                 selectedFrame === "official"
                   ? "border-primary bg-primary/10 shadow-sm ring-2 ring-primary/30"
                   : "border-border/60 bg-card/80 hover:bg-muted/50"
@@ -612,15 +749,18 @@ export default function TwibbonPage() {
               </div>
               <div>
                 <p className="text-xs font-bold text-foreground truncate">Official</p>
-                <p className="text-[10px] text-muted-foreground truncate">Tech Red & Blue</p>
+                <p className="text-[10px] text-muted-foreground truncate">Glass & Tech Glow</p>
               </div>
             </button>
 
             {/* Cyber Dev Theme */}
             <button
               type="button"
-              onClick={() => setSelectedFrame("cyber")}
-              className={`p-2.5 sm:p-3 rounded-2xl border transition-all text-left flex flex-col justify-between relative overflow-hidden ${
+              onClick={() => {
+                setSelectedFrame("cyber");
+                triggerHaptic("light");
+              }}
+              className={`p-2.5 sm:p-3 rounded-2xl border transition-all text-left flex flex-col justify-between relative overflow-hidden cursor-pointer ${
                 selectedFrame === "cyber"
                   ? "border-cyan-400 bg-cyan-950/25 shadow-sm ring-2 ring-cyan-400/30"
                   : "border-border/60 bg-card/80 hover:bg-muted/50"
@@ -641,8 +781,11 @@ export default function TwibbonPage() {
             {/* Minimalist Theme */}
             <button
               type="button"
-              onClick={() => setSelectedFrame("minimalist")}
-              className={`p-2.5 sm:p-3 rounded-2xl border transition-all text-left flex flex-col justify-between relative overflow-hidden ${
+              onClick={() => {
+                setSelectedFrame("minimalist");
+                triggerHaptic("light");
+              }}
+              className={`p-2.5 sm:p-3 rounded-2xl border transition-all text-left flex flex-col justify-between relative overflow-hidden cursor-pointer ${
                 selectedFrame === "minimalist"
                   ? "border-primary bg-primary/10 shadow-sm ring-2 ring-primary/30"
                   : "border-border/60 bg-card/80 hover:bg-muted/50"
@@ -659,31 +802,6 @@ export default function TwibbonPage() {
                 <p className="text-[10px] text-muted-foreground truncate">Glass Badge</p>
               </div>
             </button>
-
-            {/* Custom Community Template (if available) */}
-            {customTemplateUrl && (
-              <button
-                type="button"
-                onClick={() => setSelectedFrame("custom")}
-                className={`col-span-3 p-3 rounded-2xl border transition-all text-left flex items-center justify-between ${
-                  selectedFrame === "custom"
-                    ? "border-primary bg-primary/10 ring-2 ring-primary/20"
-                    : "border-border/60 bg-card/80 hover:bg-muted/50"
-                }`}
-              >
-                <div>
-                  <p className="text-xs font-bold text-foreground">
-                    Custom Community Template
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">
-                    Template resmi dari server komunitas MaduraDev
-                  </p>
-                </div>
-                {selectedFrame === "custom" && (
-                  <Check className="w-4 h-4 text-primary" />
-                )}
-              </button>
-            )}
           </div>
         </div>
 
@@ -717,6 +835,13 @@ export default function TwibbonPage() {
                 <Sliders className="w-3 h-3 text-primary" />
                 <span>Geser foto untuk menyesuaikan posisi</span>
               </div>
+
+              {selectedFrame === "custom" && (
+                <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-emerald-950/85 backdrop-blur-md border border-emerald-400/40 text-[10px] text-emerald-300 font-bold flex items-center gap-1.5 pointer-events-none shadow-md">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  <span>Template Resmi Admin</span>
+                </div>
+              )}
             </div>
           ) : cameraError ? (
             /* Camera Permission Error State */
@@ -758,9 +883,25 @@ export default function TwibbonPage() {
 
               {/* Top Camera Controls Bar */}
               <div className="absolute top-4 inset-x-4 flex items-center justify-between z-20 pointer-events-auto">
-                <div className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-[10px] text-white font-semibold flex items-center gap-1.5 shadow-md">
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  <span>PREVIEW: {selectedFrame.toUpperCase()}</span>
+                <div
+                  className={`px-2.5 py-1 rounded-full backdrop-blur-md border text-[10px] font-bold flex items-center gap-1.5 shadow-md ${
+                    selectedFrame === "custom"
+                      ? "bg-emerald-950/80 border-emerald-400/50 text-emerald-300"
+                      : "bg-black/60 border-white/20 text-white"
+                  }`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      selectedFrame === "custom"
+                        ? "bg-emerald-400 animate-ping"
+                        : "bg-red-500 animate-pulse"
+                    }`}
+                  />
+                  <span>
+                    {selectedFrame === "custom"
+                      ? "FRAME ACARA RESMI"
+                      : `PREVIEW: ${selectedFrame.toUpperCase()}`}
+                  </span>
                 </div>
 
                 <button
@@ -950,93 +1091,168 @@ function drawOfficialFrame(
   S: number,
   logoImg: HTMLImageElement | null,
 ) {
-  // Outer gradient border
-  const bGrad = ctx.createLinearGradient(0, 0, S, S);
-  bGrad.addColorStop(0, "#0058BE");
-  bGrad.addColorStop(0.5, "#7B1FA2");
-  bGrad.addColorStop(1, "#B61722");
-  ctx.strokeStyle = bGrad;
+  ctx.save();
+
+  // 1. Sleek Outer Ambient Gradient Border
+  const borderGrad = ctx.createLinearGradient(0, 0, S, S);
+  borderGrad.addColorStop(0, "rgba(59, 130, 246, 0.85)"); // Electric Blue
+  borderGrad.addColorStop(0.5, "rgba(139, 92, 246, 0.65)"); // Indigo/Purple
+  borderGrad.addColorStop(1, "rgba(244, 63, 94, 0.85)"); // Coral Madura
+
+  ctx.strokeStyle = borderGrad;
   ctx.lineWidth = 14;
-  ctx.strokeRect(7, 7, S - 14, S - 14);
+  drawRoundedRect(ctx, 7, 7, S - 14, S - 14, 38, false, true);
 
-  // TOP BANNER
-  const bannerH = 120;
-  const topGrad = ctx.createLinearGradient(0, 0, S, 0);
-  topGrad.addColorStop(0, "rgba(182,23,34,0.96)");
-  topGrad.addColorStop(1, "rgba(136,14,27,0.95)");
-  ctx.fillStyle = topGrad;
-  ctx.fillRect(0, 0, S, bannerH);
+  // Subtle inner hairline guide with soft glow
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+  ctx.lineWidth = 1.5;
+  drawRoundedRect(ctx, 26, 26, S - 52, S - 52, 28, false, true);
 
-  // Logo
+  // 2. Precision Corner Crosshair Tech Markers
+  const cornerPad = 48;
+  const markerLen = 20;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = "round";
+
+  // Top-Left Crosshair
+  ctx.beginPath();
+  ctx.moveTo(cornerPad, cornerPad - markerLen / 2);
+  ctx.lineTo(cornerPad, cornerPad + markerLen / 2);
+  ctx.moveTo(cornerPad - markerLen / 2, cornerPad);
+  ctx.lineTo(cornerPad + markerLen / 2, cornerPad);
+  ctx.stroke();
+
+  // Top-Right Crosshair
+  ctx.beginPath();
+  ctx.moveTo(S - cornerPad, cornerPad - markerLen / 2);
+  ctx.lineTo(S - cornerPad, cornerPad + markerLen / 2);
+  ctx.moveTo(S - cornerPad - markerLen / 2, cornerPad);
+  ctx.lineTo(S - cornerPad + markerLen / 2, cornerPad);
+  ctx.stroke();
+
+  // 3. TOP FLOATING ISLAND (Apple-style Dynamic Island Pill)
+  const topW = 560;
+  const topH = 84;
+  const topX = (S - topW) / 2;
+  const topY = 42;
+
+  // Frosted shadow glow
+  ctx.shadowColor = "rgba(0, 0, 0, 0.55)";
+  ctx.shadowBlur = 24;
+  ctx.shadowOffsetY = 8;
+
+  // Dark frosted glass fill
+  ctx.fillStyle = "rgba(10, 15, 30, 0.88)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.22)";
+  ctx.lineWidth = 1.5;
+  drawRoundedRect(ctx, topX, topY, topW, topH, 24, true, true);
+
+  // Reset shadow
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+
+  // Top Island Content
   if (logoImg && logoImg.naturalWidth > 0) {
-    const lw = S * 0.22;
+    const lw = 135;
     const lh = (logoImg.naturalHeight / logoImg.naturalWidth) * lw;
-    const ly = (bannerH - lh) / 2;
-    ctx.drawImage(logoImg, S / 2 - lw / 2, ly, lw, lh);
-  } else {
-    const fs = Math.round(S * 0.03);
-    ctx.font = `bold ${fs}px 'Inter','Segoe UI',Arial,sans-serif`;
-    ctx.textAlign = "center";
+    const ly = topY + (topH - lh) / 2;
+    ctx.drawImage(logoImg, topX + 26, ly, lw, lh);
+
+    // Separator line
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(topX + 175, topY + 18);
+    ctx.lineTo(topX + 175, topY + topH - 18);
+    ctx.stroke();
+
+    // Text right of logo
     ctx.fillStyle = "#FFFFFF";
-    ctx.fillText("MADURADEV", S / 2, bannerH * 0.65);
+    ctx.font = `bold ${Math.round(S * 0.02)}px 'Space Grotesk', -apple-system, sans-serif`;
+    ctx.textAlign = "left";
+    ctx.fillText("OFFICIAL MEMBER", topX + 195, topY + 36);
+
+    ctx.fillStyle = "#38bdf8";
+    ctx.font = `600 ${Math.round(S * 0.0135)}px -apple-system, sans-serif`;
+    ctx.fillText("KOMUNITAS DEVELOPER MADURA", topX + 195, topY + 58);
+  } else {
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = `bold ${Math.round(S * 0.025)}px 'Space Grotesk', -apple-system, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText("MADURADEV COMMUNITY", S / 2, topY + 37);
+
+    ctx.fillStyle = "#38bdf8";
+    ctx.font = `bold ${Math.round(S * 0.0145)}px -apple-system, sans-serif`;
+    ctx.fillText("OFFICIAL MEMBER • EKOSISTEM IT MADURA", S / 2, topY + 60);
   }
 
-  // Corner brackets
-  const pad = 70;
-  const brkLen = 100;
-  const bw = 8;
-  const bY1 = bannerH + 25;
-  const bY2 = S - bannerH - 25;
-
-  ctx.strokeStyle = "#FFFFFF";
-  ctx.lineWidth = bw;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-
-  // Top-left
+  // Live status green dot on top right inside island
+  ctx.fillStyle = "#10b981";
   ctx.beginPath();
-  ctx.moveTo(pad, bY1 + brkLen);
-  ctx.lineTo(pad, bY1);
-  ctx.lineTo(pad + brkLen, bY1);
-  ctx.stroke();
+  ctx.arc(topX + topW - 28, topY + topH / 2, 5.5, 0, Math.PI * 2);
+  ctx.fill();
 
-  // Top-right
-  ctx.beginPath();
-  ctx.moveTo(S - pad - brkLen, bY1);
-  ctx.lineTo(S - pad, bY1);
-  ctx.lineTo(S - pad, bY1 + brkLen);
-  ctx.stroke();
+  // 4. BOTTOM HERO FLOATING GLASS CARD
+  const botW = 940;
+  const botH = 142;
+  const botX = (S - botW) / 2;
+  const botY = S - botH - 46;
 
-  // Bottom-left
-  ctx.beginPath();
-  ctx.moveTo(pad, bY2 - brkLen);
-  ctx.lineTo(pad, bY2);
-  ctx.lineTo(pad + brkLen, bY2);
-  ctx.stroke();
+  // Soft shadow for depth
+  ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+  ctx.shadowBlur = 32;
+  ctx.shadowOffsetY = 14;
 
-  // Bottom-right
-  ctx.beginPath();
-  ctx.moveTo(S - pad - brkLen, bY2);
-  ctx.lineTo(S - pad, bY2);
-  ctx.lineTo(S - pad, bY2 - brkLen);
-  ctx.stroke();
+  // Frosted dark glass fill with subtle gradient border
+  ctx.fillStyle = "rgba(8, 12, 22, 0.9)";
+  const botStrokeGrad = ctx.createLinearGradient(botX, botY, botX + botW, botY + botH);
+  botStrokeGrad.addColorStop(0, "rgba(56, 189, 248, 0.75)"); // Cyan
+  botStrokeGrad.addColorStop(0.5, "rgba(99, 102, 241, 0.55)"); // Indigo
+  botStrokeGrad.addColorStop(1, "rgba(244, 63, 94, 0.75)"); // Rose
+  ctx.strokeStyle = botStrokeGrad;
+  ctx.lineWidth = 2;
+  drawRoundedRect(ctx, botX, botY, botW, botH, 28, true, true);
 
-  // BOTTOM BANNER
-  const botH = 120;
-  const botGrad = ctx.createLinearGradient(0, 0, S, 0);
-  botGrad.addColorStop(0, "rgba(0,70,200,0.96)");
-  botGrad.addColorStop(1, "rgba(21,101,192,0.95)");
-  ctx.fillStyle = botGrad;
-  ctx.fillRect(0, S - botH, S, botH);
+  // Reset shadow
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+
+  // Top subline inside bottom card
+  ctx.fillStyle = "#38bdf8";
+  ctx.font = `bold ${Math.round(S * 0.015)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+  ctx.textAlign = "left";
+  ctx.fillText("WADAH KOLABORASI DEVELOPER", botX + 36, botY + 38);
+
+  // Main Headline inside bottom card
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = `900 ${Math.round(S * 0.034)}px 'Space Grotesk', -apple-system, sans-serif`;
+  ctx.fillText("BANGGA JADI DEVELOPER MADURA", botX + 36, botY + 80);
+
+  // 4 Regional Districts / Footer Line
+  ctx.fillStyle = "rgba(255, 255, 255, 0.65)";
+  ctx.font = `600 ${Math.round(S * 0.015)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+  ctx.fillText("Bangkalan • Sampang • Pamekasan • Sumenep", botX + 36, botY + 115);
+
+  // Right side of bottom card: Sleek domain pill
+  const pillW = 150;
+  const pillH = 46;
+  const pillX = botX + botW - pillW - 32;
+  const pillY = botY + (botH - pillH) / 2;
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.22)";
+  ctx.lineWidth = 1;
+  drawRoundedRect(ctx, pillX, pillY, pillW, pillH, 14, true, true);
 
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = `bold ${Math.round(S * 0.035)}px 'Inter','Segoe UI',Arial,sans-serif`;
+  ctx.font = `bold ${Math.round(S * 0.017)}px 'Space Grotesk', monospace, sans-serif`;
   ctx.textAlign = "center";
-  ctx.fillText("LOCAL TECH HUB", S / 2, S - botH * 0.42);
+  ctx.fillText("madura.dev", pillX + pillW / 2, pillY + pillH * 0.62);
 
-  ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
-  ctx.font = `600 ${Math.round(S * 0.016)}px 'Inter',sans-serif`;
-  ctx.fillText("KOMUNITAS DEVELOPER MADURA", S / 2, S - botH * 0.16);
+  ctx.restore();
 }
 
 function drawCyberFrame(ctx: CanvasRenderingContext2D, S: number) {

@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   ExternalLink,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import {
   Sidebar,
@@ -111,6 +112,7 @@ export function DashboardSidebar() {
             { title: "Events", url: "/dashboard/events", icon: Calendar },
             { title: "Media & Artikel", url: "/dashboard/media", icon: Newspaper },
             { title: "Komunitas", url: "/dashboard/communities", icon: MapPin },
+            { title: "Editor Twibbon", url: "/dashboard/twibbon-editor", icon: Sparkles },
           ],
         },
         {

@@ -14,6 +14,7 @@ const adminOnlyPaths = [
   "/dashboard/settings",
   "/dashboard/custom-domains",
   "/dashboard/media",
+  "/dashboard/twibbon-editor",
 ];
 
 export const meta: Route.MetaFunction = () => [
@@ -64,6 +65,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       "/dashboard/settings",
       "/dashboard/custom-domains",
       "/dashboard/communities",
+      "/dashboard/twibbon-editor",
     ].some((path) => pathname.startsWith(path));
 
     if (isStrictAdmin) {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, Link } from "react-router";
 import { createClient } from "@/lib/supabase/client";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2, Upload, Image, Trash } from "lucide-react";
+import { Loader2, Upload, Image, Trash, Sparkles, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 export const meta = () => [
@@ -301,7 +301,14 @@ export default function SettingsPage() {
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     Unggah file gambar kustom format **PNG transparan** dengan aspek rasio **1:1 (Square)**, disarankan resolusi **1080x1080px**. Gambar ini akan menimpa bingkai bawaan pada halaman Twibbon.
                   </p>
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex gap-2 flex-wrap items-center">
+                    <Link
+                      to="/dashboard/twibbon-editor"
+                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-bold transition-all shadow-xs"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      <span>Buka Studio Editor (Potong Transparansi)</span>
+                    </Link>
                     {templateFile && (
                       <Button type="submit" disabled={uploadingTemplate} className="flex items-center gap-2">
                         {uploadingTemplate ? (
