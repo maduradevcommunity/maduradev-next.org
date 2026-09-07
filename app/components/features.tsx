@@ -19,9 +19,9 @@ export default function BentoGrid() {
           {/* Card 1 - Belajar Bareng */}
           <motion.div
             whileHover={{ y: -8 }}
-            className="md:col-span-2 bg-card border border-border/50 p-10 rounded-3xl editorial-shadow flex flex-col justify-between group hover:bg-primary transition-all duration-500"
+            className="md:col-span-2 bg-card border border-border/50 p-6 sm:p-8 md:p-10 rounded-3xl editorial-shadow flex flex-col justify-between group hover:bg-primary transition-all duration-500"
           >
-            <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-12 group-hover:bg-white transition-colors">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-8 sm:mb-12 group-hover:bg-white transition-colors">
               <GraduationCap className="text-primary group-hover:text-primary text-3xl" />
             </div>
             <div>
@@ -38,9 +38,9 @@ export default function BentoGrid() {
           {/* Card 2 - Komunitas Supportif */}
           <motion.div
             whileHover={{ y: -8 }}
-            className="md:col-span-2 bg-muted/50 border border-border/50 p-10 rounded-3xl editorial-shadow flex flex-col justify-between group"
+            className="md:col-span-2 bg-muted/50 border border-border/50 p-6 sm:p-8 md:p-10 rounded-3xl editorial-shadow flex flex-col justify-between group"
           >
-            <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mb-12">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-secondary rounded-2xl flex items-center justify-center mb-8 sm:mb-12">
               <Users2 className="text-primary group-hover:text-primary text-3xl" />
             </div>
             <div>
@@ -55,7 +55,7 @@ export default function BentoGrid() {
           {/* Card 3 - Knowledge Sharing */}
           <motion.div
             whileHover={{ y: -8 }}
-            className="md:col-span-2 lg:col-span-1 bg-card border border-border/50 p-10 rounded-3xl flex flex-col items-center text-center group"
+            className="md:col-span-2 lg:col-span-1 bg-card border border-border/50 p-6 sm:p-8 md:p-10 rounded-3xl flex flex-col items-center text-center group"
           >
             <div className="w-14 h-14 bg-muted/50 rounded-full flex items-center justify-center mb-6 group-hover:bg-primary/10 transition-colors">
               <Sparkles className="text-primary text-2xl" />
@@ -69,7 +69,7 @@ export default function BentoGrid() {
           {/* Card 4 - Networking */}
           <motion.div
             whileHover={{ y: -8 }}
-            className="md:col-span-2 lg:col-span-1 bg-card border border-border/50 p-10 rounded-3xl flex flex-col items-center text-center group"
+            className="md:col-span-2 lg:col-span-1 bg-card border border-border/50 p-6 sm:p-8 md:p-10 rounded-3xl flex flex-col items-center text-center group"
           >
             <div className="w-14 h-14 bg-muted/50 rounded-full flex items-center justify-center mb-6 group-hover:bg-primary/10 transition-colors">
               <Network className="text-primary text-2xl" />
@@ -83,27 +83,39 @@ export default function BentoGrid() {
           {/* Stats Card */}
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="md:col-span-4 lg:col-span-2 bg-slate-950 p-10 rounded-3xl flex items-center justify-around text-slate-50"
+            className="md:col-span-4 lg:col-span-2 bg-slate-950 border border-white/10 py-6 px-2 sm:p-8 md:p-10 rounded-3xl text-slate-50 relative overflow-hidden flex items-center"
           >
-            <div className="text-center">
-              <p className="text-5xl font-black">1.1M</p>
-              <p className="font-label text-[10px] uppercase tracking-widest text-primary/60">
-                Followers
-              </p>
-            </div>
-            <div className="w-px h-16 bg-white/10" />
-            <div className="text-center">
-              <p className="text-5xl font-black">50+</p>
-              <p className="font-label text-[10px] uppercase tracking-widest text-primary/60">
-                Projects
-              </p>
-            </div>
-            <div className="w-px h-16 bg-white/10" />
-            <div className="text-center">
-              <p className="text-5xl font-black">12</p>
-              <p className="font-label text-[10px] uppercase tracking-widest text-primary/60">
-                Events/Year
-              </p>
+            {/* Ambient liquid glow in background */}
+            <div className="pointer-events-none absolute -top-12 -right-12 w-36 h-36 bg-primary/20 rounded-full blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-12 -left-12 w-36 h-36 bg-primary/10 rounded-full blur-3xl" />
+
+            <div className="grid grid-cols-3 divide-x divide-white/10 w-full items-center relative z-10">
+              <div className="text-center px-1 sm:px-4">
+                <p className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-white">
+                  1.1M
+                </p>
+                <p className="font-label text-[9px] sm:text-[10px] md:text-xs uppercase tracking-wider sm:tracking-widest text-primary/70 mt-1">
+                  Followers
+                </p>
+              </div>
+
+              <div className="text-center px-1 sm:px-4">
+                <p className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-white">
+                  50+
+                </p>
+                <p className="font-label text-[9px] sm:text-[10px] md:text-xs uppercase tracking-wider sm:tracking-widest text-primary/70 mt-1">
+                  Projects
+                </p>
+              </div>
+
+              <div className="text-center px-1 sm:px-4">
+                <p className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-white">
+                  12
+                </p>
+                <p className="font-label text-[9px] sm:text-[10px] md:text-xs uppercase tracking-wider sm:tracking-widest text-primary/70 mt-1">
+                  Events/Year
+                </p>
+              </div>
             </div>
           </motion.div>
         </div>
