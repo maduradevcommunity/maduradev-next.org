@@ -24,6 +24,7 @@ import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { triggerHaptic } from "@/lib/haptics";
 
 function SwitchCameraIcon({ className }: { className?: string }) {
   return (
@@ -325,14 +326,17 @@ export default function TwibbonPage() {
     startCamera(next);
   };
 
-  // Dragging event handlers (mouse & touch)
-  const handleMouseDown = (e: React.MouseEvent) => {
+  // Direct manipulation via Pointer Events with setPointerCapture (Apple Fluid Interfaces)
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!rawPhoto) return;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
     setIsDragging(true);
     setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDragging || !rawPhoto) return;
     setPosition({
       x: e.clientX - dragStart.x,
@@ -340,36 +344,23 @@ export default function TwibbonPage() {
     });
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!rawPhoto) return;
-    const touch = e.touches[0];
-    setIsDragging(true);
-    setDragStart({ x: touch.clientX - position.x, y: touch.clientY - position.y });
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || !rawPhoto) return;
-    const touch = e.touches[0];
-    setPosition({
-      x: touch.clientX - dragStart.x,
-      y: touch.clientY - dragStart.y,
-    });
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {}
+      setIsDragging(false);
+    }
   };
 
   // Adjustments
   const handleRotate = () => {
+    triggerHaptic("light");
     setRotation((prev) => (prev + 90) % 360);
   };
 
   const handleFlip = () => {
+    triggerHaptic("light");
     setIsFlipped((prev) => !prev);
   };
 
@@ -422,6 +413,7 @@ export default function TwibbonPage() {
     }
     sCtx.drawImage(video, sx, sy, sw, sh, 0, 0, SIZE, SIZE);
 
+    triggerHaptic("medium");
     setRawPhoto(snapCanvas.toDataURL("image/png", 1.0));
     setScale(1);
     setPosition({ x: 0, y: 0 });
@@ -436,6 +428,7 @@ export default function TwibbonPage() {
   };
 
   const retakePhoto = () => {
+    triggerHaptic("light");
     setRawPhoto(null);
     setLoadedImage(null);
     setScale(1);
@@ -456,6 +449,7 @@ export default function TwibbonPage() {
 
     const reader = new FileReader();
     reader.onload = (event) => {
+      triggerHaptic("light");
       setRawPhoto(event.target?.result as string);
       setScale(1);
       setPosition({ x: 0, y: 0 });
@@ -476,6 +470,7 @@ export default function TwibbonPage() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    triggerHaptic("success");
     setIsDownloading(true);
     setTimeout(() => {
       const timestamp = new Date().getTime();
@@ -488,7 +483,7 @@ export default function TwibbonPage() {
       link.click();
       document.body.removeChild(link);
       setIsDownloading(false);
-      toast.success("Twibbon 1080p berhasil didownload!");
+      toast.success("Twibbon berhasil didownload!");
     }, 400);
   };
 
@@ -503,6 +498,7 @@ export default function TwibbonPage() {
         await navigator.clipboard.write([
           new ClipboardItem({ "image/png": blob }),
         ]);
+        triggerHaptic("success");
         setIsCopied(true);
         toast.success("Gambar Twibbon berhasil disalin ke clipboard!");
         setTimeout(() => setIsCopied(false), 2500);
@@ -706,13 +702,10 @@ export default function TwibbonPage() {
             <div
               className="relative w-full h-full cursor-grab active:cursor-grabbing select-none touch-none"
               style={{ touchAction: "none" }}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
             >
               <canvas
                 ref={canvasRef}

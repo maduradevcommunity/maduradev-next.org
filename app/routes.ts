@@ -12,6 +12,8 @@ export default [
     route("community", "routes/_site.community.tsx"),
     route("media", "routes/_site.media.tsx"),
     route("media/:slug", "routes/_site.media.$slug.tsx"),
+    route("privacy-policy", "routes/_site.privacy-policy.tsx"),
+    route("terms-of-service", "routes/_site.terms-of-service.tsx"),
   ]),
 
   // Public ticket page (no auth required)

@@ -10,6 +10,8 @@ const STATIC_PAGES = [
   { path: "/media", priority: "0.8", changefreq: "monthly" },
   { path: "/community", priority: "0.8", changefreq: "monthly" },
   { path: "/twibbon", priority: "0.6", changefreq: "monthly" },
+  { path: "/privacy-policy", priority: "0.5", changefreq: "yearly" },
+  { path: "/terms-of-service", priority: "0.5", changefreq: "yearly" },
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {

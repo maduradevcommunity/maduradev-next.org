@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { useInView, motion } from "motion/react";
 import { Link } from "react-router";
 import { Globe } from "lucide-react";
+import { appleSprings } from "@/lib/springs";
 
 function nameToSlug(name: string): string {
   return name
@@ -65,11 +66,11 @@ export default function TeamClient({ members }: TeamClientProps) {
   };
 
   const itemVariants = {
-    hidden: { y: 24, opacity: 0 },
+    hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,
       opacity: 1,
-      transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const },
+      transition: appleSprings.default,
     },
   };
 
@@ -92,9 +93,9 @@ export default function TeamClient({ members }: TeamClientProps) {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
           <motion.div
             className="max-w-xl"
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+            transition={appleSprings.default}
           >
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full mb-6">
               <span className="text-[10px] font-bold uppercase tracking-widest">
@@ -126,8 +127,9 @@ export default function TeamClient({ members }: TeamClientProps) {
           {members.map((member) => (
             <motion.div
               key={member.id}
-              className="group relative bg-card p-6 rounded-2xl border border-border/60 hover:border-primary/40 transition-all duration-300 hover:-translate-y-1"
+              className="group relative bg-card p-6 rounded-2xl border border-border/60 hover:border-primary/40 transition-colors duration-200"
               variants={itemVariants}
+              whileHover={{ y: -5, transition: appleSprings.snappy }}
             >
               <Link
                 to={`/teams/${nameToSlug(member.name)}`}

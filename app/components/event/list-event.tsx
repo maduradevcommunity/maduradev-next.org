@@ -14,6 +14,8 @@ import {
   Inbox
 } from "lucide-react";
 import { isEventNew, type EventDisplay } from "@/lib/event";
+import { appleSprings } from "@/lib/springs";
+import { triggerHaptic } from "@/lib/haptics";
 
 interface ListEventProps {
   events: EventDisplay[];
@@ -23,16 +25,16 @@ const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.08 },
+    transition: { staggerChildren: 0.06, delayChildren: 0.04 },
   },
 };
 
 const cardVariants: Variants = {
-  hidden: { y: 20, opacity: 0 },
+  hidden: { y: 16, opacity: 0 },
   visible: {
     y: 0,
     opacity: 1,
-    transition: { duration: 0.5, ease: "easeOut" },
+    transition: appleSprings.default,
   },
 };
 
@@ -93,8 +95,11 @@ export default function ListEvent({ events }: ListEventProps) {
           {/* Status Segment Filter */}
           <div className="flex bg-muted/60 p-1.5 rounded-2xl border border-border/40 self-start lg:self-auto">
             <button
-              onClick={() => setSelectedStatus("mendatang")}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
+              onClick={() => {
+                triggerHaptic("light");
+                setSelectedStatus("mendatang");
+              }}
+              className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest select-none cursor-pointer transition-all active:scale-95 ${
                 selectedStatus === "mendatang"
                   ? "bg-card text-foreground shadow-md"
                   : "text-muted-foreground hover:text-foreground"
@@ -103,8 +108,11 @@ export default function ListEvent({ events }: ListEventProps) {
               Mendatang
             </button>
             <button
-              onClick={() => setSelectedStatus("selesai")}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
+              onClick={() => {
+                triggerHaptic("light");
+                setSelectedStatus("selesai");
+              }}
+              className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest select-none cursor-pointer transition-all active:scale-95 ${
                 selectedStatus === "selesai"
                   ? "bg-card text-foreground shadow-md"
                   : "text-muted-foreground hover:text-foreground"
@@ -113,8 +121,11 @@ export default function ListEvent({ events }: ListEventProps) {
               Selesai
             </button>
             <button
-              onClick={() => setSelectedStatus("semua")}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
+              onClick={() => {
+                triggerHaptic("light");
+                setSelectedStatus("semua");
+              }}
+              className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest select-none cursor-pointer transition-all active:scale-95 ${
                 selectedStatus === "semua"
                   ? "bg-card text-foreground shadow-md"
                   : "text-muted-foreground hover:text-foreground"
@@ -135,10 +146,13 @@ export default function ListEvent({ events }: ListEventProps) {
             {formats.map((format) => (
               <button
                 key={format}
-                onClick={() => setSelectedFormat(format)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
+                onClick={() => {
+                  triggerHaptic("light");
+                  setSelectedFormat(format);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border select-none cursor-pointer active:scale-95 ${
                   selectedFormat === format
-                    ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-95"
+                    ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20 scale-95"
                     : "bg-background/40 hover:bg-background/80 text-muted-foreground hover:text-foreground border-border/50"
                 }`}
               >
@@ -154,6 +168,7 @@ export default function ListEvent({ events }: ListEventProps) {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={appleSprings.default}
           className="rounded-3xl border border-border/50 bg-card/60 backdrop-blur-md p-16 text-center editorial-shadow max-w-xl mx-auto flex flex-col items-center"
         >
           <Inbox className="w-16 h-16 mb-4 text-muted-foreground/40" />
@@ -177,7 +192,8 @@ export default function ListEvent({ events }: ListEventProps) {
               <motion.div
                 key={event.id}
                 variants={cardVariants}
-                className="group flex flex-col justify-between rounded-3xl overflow-hidden border border-border/50 bg-card/60 backdrop-blur-md hover:border-primary/50 transition-all duration-300 editorial-shadow hover:-translate-y-2"
+                whileHover={{ y: -5, transition: appleSprings.snappy }}
+                className="group flex flex-col justify-between rounded-3xl overflow-hidden border border-border/50 bg-card/60 backdrop-blur-md hover:border-primary/50 transition-colors duration-200 editorial-shadow"
               >
                 {/* Image Section */}
                 <Link

@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { Globe, Users2, Share2 } from "lucide-react";
 
 const partners = [
@@ -27,8 +28,8 @@ const quickLinks = [
   { name: "Telegram", url: "/telegram" },
   { name: "Instagram", url: "/instagram" },
   { name: "GitHub", url: "/github" },
-  { name: "Contact Us", url: "#" },
-  { name: "Partners", url: "#" },
+  { name: "Hubungi Kami", url: "mailto:info.maduradev@gmail.com" },
+  { name: "Komunitas", url: "/community" },
 ];
 
 export default function Footer() {
@@ -86,15 +87,27 @@ export default function Footer() {
             Quick Links
           </p>
           <div className="flex flex-col gap-3">
-            {quickLinks.map((link, i) => (
-              <a
-                key={i}
-                href={link.url}
-                className="text-sm hover:text-primary transition-colors font-label uppercase tracking-widest"
-              >
-                {link.name}
-              </a>
-            ))}
+            {quickLinks.map((link, i) =>
+              link.url.startsWith("/") ? (
+                <Link
+                  key={i}
+                  to={link.url}
+                  className="text-sm hover:text-primary transition-colors font-label uppercase tracking-widest"
+                >
+                  {link.name}
+                </Link>
+              ) : (
+                <a
+                  key={i}
+                  href={link.url}
+                  target={link.url.startsWith("http") ? "_blank" : undefined}
+                  rel={link.url.startsWith("http") ? "noopener noreferrer" : undefined}
+                  className="text-sm hover:text-primary transition-colors font-label uppercase tracking-widest"
+                >
+                  {link.name}
+                </a>
+              )
+            )}
           </div>
         </div>
       </div>
@@ -106,12 +119,18 @@ export default function Footer() {
           ecosystem.
         </p>
         <div className="flex gap-6">
-          <a href="#" className="hover:text-slate-50 transition-colors">
+          <Link
+            to="/privacy-policy"
+            className="hover:text-slate-50 transition-colors"
+          >
             Privacy Policy
-          </a>
-          <a href="#" className="hover:text-slate-50 transition-colors">
+          </Link>
+          <Link
+            to="/terms-of-service"
+            className="hover:text-slate-50 transition-colors"
+          >
             Terms of Service
-          </a>
+          </Link>
         </div>
         <div className="flex gap-4">
           <Globe size={16} />

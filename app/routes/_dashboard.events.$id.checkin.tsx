@@ -17,6 +17,7 @@ import {
   Keyboard,
 } from "lucide-react";
 import { toast } from "sonner";
+import { triggerHaptic } from "@/lib/haptics";
 
 export const meta: Route.MetaFunction = ({ data }) => [
   {
@@ -210,6 +211,7 @@ function CameraScanner({ onScan, active }: ScannerProps) {
           if (code && code.data) {
             scannedRef.current = true;
             stopCamera();
+            triggerHaptic("medium");
             onScan(code.data);
             return;
           }
@@ -317,6 +319,7 @@ export default function EventCheckinPage() {
     if (!data) return;
 
     if (data.success) {
+      triggerHaptic("success");
       setLastResult({
         type: "success",
         name: data.participant?.name,
@@ -325,6 +328,7 @@ export default function EventCheckinPage() {
       });
       toast.success(`✅ ${data.participant?.name} berhasil check-in!`);
     } else if (data.alreadyCheckedIn) {
+      triggerHaptic("warning");
       setLastResult({
         type: "duplicate",
         name: data.participant?.name,
@@ -333,6 +337,7 @@ export default function EventCheckinPage() {
       });
       toast.warning(data.message ?? "Peserta sudah check-in sebelumnya.");
     } else if (data.error) {
+      triggerHaptic("error");
       setLastResult({ type: "error", message: data.error });
       toast.error(data.error);
     }

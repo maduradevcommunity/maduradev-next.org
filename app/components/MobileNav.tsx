@@ -1,5 +1,6 @@
 import { Home, Users, Calendar, Camera, Newspaper } from "lucide-react";
 import { Link, useLocation } from "react-router";
+import { triggerHaptic } from "@/lib/haptics";
 
 const leftItems = [
   { icon: Home, label: "Home", url: "/" },
@@ -34,7 +35,7 @@ export default function MobileNav() {
             scale="14"
             xChannelSelector="R"
             yChannelSelector="G"
-          />
+            />
         </filter>
       </svg>
 
@@ -82,12 +83,13 @@ export default function MobileNav() {
                 <Link
                   key={label}
                   to={url}
-                  className="flex flex-col items-center justify-center min-w-14 py-1 group active:scale-95 transition-transform duration-150"
+                  onClick={() => triggerHaptic("light")}
+                  className="flex flex-col items-center justify-center min-w-14 py-1 group active:scale-90 transition-all duration-150 select-none"
                 >
                   <div
                     className={`
                       w-10 h-8 flex items-center justify-center rounded-2xl
-                      transition-all duration-300 relative
+                      transition-all duration-250 relative
                       ${active
                         ? "bg-primary/15 dark:bg-primary/25 text-primary border border-primary/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),0_2px_8px_rgba(var(--primary),0.2)]"
                         : "text-foreground/70 dark:text-muted-foreground group-hover:text-foreground group-hover:bg-black/5 dark:group-hover:bg-white/5"
@@ -116,7 +118,8 @@ export default function MobileNav() {
             {/* Center Twibbon / Camera Button - Liquid Glass Droplet (unclipped) */}
             <Link
               to="/twibbon"
-              className="flex flex-col items-center justify-center min-w-14 -mt-6 group"
+              onClick={() => triggerHaptic("medium")}
+              className="flex flex-col items-center justify-center min-w-14 -mt-6 group select-none"
             >
               <div className="p-1.5 rounded-full bg-white/90 dark:bg-zinc-800/90 backdrop-blur-xl border border-white dark:border-white/25 shadow-xl shadow-primary/25 group-active:scale-90 transition-transform duration-200">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-b from-primary via-primary/95 to-primary/85 text-primary-foreground flex items-center justify-center shadow-[0_8px_20px_-2px_rgba(var(--primary),0.5),inset_0_2px_4px_rgba(255,255,255,0.6),inset_0_-2px_4px_rgba(0,0,0,0.25)] group-hover:shadow-[0_10px_24px_-2px_rgba(var(--primary),0.6),inset_0_2px_4px_rgba(255,255,255,0.8)] transition-all duration-300">
@@ -139,12 +142,13 @@ export default function MobileNav() {
                 <Link
                   key={label}
                   to={url}
-                  className="flex flex-col items-center justify-center min-w-14 py-1 group active:scale-95 transition-transform duration-150"
+                  onClick={() => triggerHaptic("light")}
+                  className="flex flex-col items-center justify-center min-w-14 py-1 group active:scale-90 transition-all duration-150 select-none"
                 >
                   <div
                     className={`
                       w-10 h-8 flex items-center justify-center rounded-2xl
-                      transition-all duration-300 relative
+                      transition-all duration-250 relative
                       ${active
                         ? "bg-primary/15 dark:bg-primary/25 text-primary border border-primary/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),0_2px_8px_rgba(var(--primary),0.2)]"
                         : "text-foreground/70 dark:text-muted-foreground group-hover:text-foreground group-hover:bg-black/5 dark:group-hover:bg-white/5"

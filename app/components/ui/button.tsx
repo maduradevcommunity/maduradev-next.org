@@ -14,15 +14,20 @@ const variantClasses: Record<string, string> = {
 };
 
 const sizeClasses: Record<string, string> = {
-  default: "h-10 px-4 py-2",
-  sm: "h-9 rounded-md px-3 text-sm",
-  lg: "h-12 rounded-md px-8 text-lg",
-  icon: "h-10 w-10",
+  default: "h-10 min-h-[40px] px-4 py-2",
+  sm: "h-9 min-h-[38px] rounded-lg px-3.5 text-sm",
+  lg: "h-12 min-h-[48px] rounded-xl px-8 text-base font-semibold",
+  icon: "h-10 w-10 min-w-[40px] min-h-[40px] p-0",
 };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = "", variant = "default", size = "default", asChild = false, children, ...props }, ref) => {
-    const classes = `inline-flex items-center justify-center gap-2 rounded-lg font-medium text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
+    const classes = `inline-flex items-center justify-center gap-2 rounded-xl font-medium text-sm select-none cursor-pointer
+      transition-all duration-100 ease-out
+      active:scale-[0.97] active:opacity-90
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+      disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100
+      ${variantClasses[variant]} ${sizeClasses[size]} ${className}`.trim();
 
     if (asChild && React.isValidElement(children)) {
       return React.cloneElement(children as React.ReactElement<any>, {

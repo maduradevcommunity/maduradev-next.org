@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAllEvents } from "@/lib/event";
 import ListEvent from "@/components/event/list-event";
 import { motion, type Variants } from "motion/react";
+import { appleSprings } from "@/lib/springs";
 
 export const meta: Route.MetaFunction = () => [
   { title: "Events - MaduraDev" },
@@ -27,12 +28,12 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 const headerVariants: Variants = {
-  hidden: { opacity: 0, y: -20 },
+  hidden: { opacity: 0, y: -16 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: "easeOut" }
-  }
+    transition: appleSprings.default,
+  },
 };
 
 export default function EventsPage({ loaderData }: Route.ComponentProps) {

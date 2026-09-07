@@ -30,7 +30,7 @@ export function AlertDialog({ open, onOpenChange, children }: AlertDialogProps) 
       onClick={(e) => {
         if (e.target === dialogRef.current) handleClose();
       }}
-      className="fixed inset-0 z-50 m-auto max-h-[85vh] w-full max-w-lg rounded-xl border border-border bg-background p-0 shadow-lg backdrop:bg-black/50 backdrop:backdrop-blur-sm"
+      className="fixed inset-0 z-50 m-auto max-h-[85vh] w-full max-w-lg rounded-2xl border border-border/80 bg-card/95 backdrop-blur-2xl p-0 shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-md open:animate-in open:fade-in open:zoom-in-95 duration-200 ease-out"
     >
       {open && children}
     </dialog>
@@ -70,7 +70,7 @@ export function AlertDialogAction({ children, className = "", ...props }: AlertD
   return (
     <button
       {...props}
-      className={`inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 ${className}`}
+      className={`inline-flex h-10 min-h-[40px] items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground select-none transition-all duration-100 ease-out active:scale-[0.97] active:opacity-90 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 cursor-pointer ${className}`}
     >
       {children}
     </button>
@@ -85,7 +85,7 @@ export function AlertDialogCancel({ children, className = "", ...props }: AlertD
   return (
     <button
       {...props}
-      className={`inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-semibold transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 ${className}`}
+      className={`inline-flex h-10 min-h-[40px] items-center justify-center rounded-xl border border-input bg-background px-4 py-2 text-sm font-semibold select-none transition-all duration-100 ease-out active:scale-[0.97] active:opacity-90 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 cursor-pointer ${className}`}
     >
       {children}
     </button>

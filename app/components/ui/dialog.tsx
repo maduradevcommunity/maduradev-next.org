@@ -30,7 +30,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
       onClick={(e) => {
         if (e.target === dialogRef.current) handleClose();
       }}
-      className="fixed inset-0 z-50 m-auto max-h-[85vh] w-full max-w-lg rounded-xl border border-border bg-background p-0 shadow-lg backdrop:bg-black/50 backdrop:backdrop-blur-sm open:animate-in open:fade-in"
+      className="fixed inset-0 z-50 m-auto max-h-[85vh] w-full max-w-lg rounded-2xl border border-border/80 bg-card/95 backdrop-blur-2xl p-0 shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-md open:animate-in open:fade-in open:zoom-in-95 duration-200 ease-out"
     >
       {open && children}
     </dialog>

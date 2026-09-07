@@ -58,13 +58,21 @@ export function SidebarInset({ children, className = "" }: { children: React.Rea
   return <div className={`flex flex-1 flex-col min-w-0 ${className}`}>{children}</div>;
 }
 
+import { triggerHaptic } from "@/lib/haptics";
+
 export function SidebarTrigger({ className = "" }: { className?: string }) {
   const { open, toggle, isMobile } = useContext(SidebarContext);
+
+  const handleToggle = () => {
+    triggerHaptic("light");
+    toggle();
+  };
+
   return (
     <button
-      onClick={toggle}
+      onClick={handleToggle}
       title={open ? "Tutup Sidebar" : "Buka Sidebar"}
-      className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-card/60 text-muted-foreground hover:text-foreground hover:bg-muted/80 shadow-2xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${className}`}
+      className={`inline-flex h-10 w-10 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-card/60 text-muted-foreground hover:text-foreground hover:bg-muted/80 shadow-2xs select-none transition-all duration-100 ease-out active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${className}`}
     >
       {isMobile ? (
         open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />
@@ -85,13 +93,16 @@ export function Sidebar({ children, className = "" }: { children: React.ReactNod
         {/* Backdrop */}
         {open && (
           <div
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
-            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => {
+              triggerHaptic("light");
+              setOpen(false);
+            }}
             aria-hidden="true"
           />
         )}
         <aside
-          className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-border bg-card text-foreground shadow-2xl transition-transform duration-300 ease-out ${open ? "translate-x-0" : "-translate-x-full"
+          className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-border/80 bg-card/95 backdrop-blur-2xl text-foreground shadow-2xl transition-transform duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] ${open ? "translate-x-0" : "-translate-x-full"
             } ${className}`}
         >
           {children}

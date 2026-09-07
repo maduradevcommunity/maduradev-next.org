@@ -6,6 +6,8 @@ import { getAllMediaPosts } from "@/lib/media";
 import { motion, type Variants } from "motion/react";
 import { Calendar, Clock, Newspaper, ChevronRight, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { appleSprings } from "@/lib/springs";
+import { triggerHaptic } from "@/lib/haptics";
 
 export const meta: Route.MetaFunction = () => [
   { title: "Media - MaduraDev" },
@@ -34,11 +36,11 @@ export async function loader() {
 }
 
 const headerVariants: Variants = {
-  hidden: { opacity: 0, y: -20 },
+  hidden: { opacity: 0, y: -16 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: "easeOut" }
+    transition: appleSprings.default,
   }
 };
 
@@ -46,16 +48,16 @@ const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 }
+    transition: { staggerChildren: 0.06, delayChildren: 0.04 }
   }
 };
 
 const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.4, ease: "easeOut" }
+    transition: appleSprings.default,
   }
 };
 
@@ -157,8 +159,11 @@ export default function MediaPage({ loaderData }: Route.ComponentProps) {
         <div className="flex border-b border-border/60 pb-px">
           <div className="flex gap-2 p-1 bg-muted/40 rounded-xl border border-border/40">
             <button
-              onClick={() => setActiveFilter("semua")}
-              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${
+              onClick={() => {
+                triggerHaptic("light");
+                setActiveFilter("semua");
+              }}
+              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg select-none cursor-pointer transition-all active:scale-95 ${
                 activeFilter === "semua"
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -167,8 +172,11 @@ export default function MediaPage({ loaderData }: Route.ComponentProps) {
               Semua
             </button>
             <button
-              onClick={() => setActiveFilter("kabar")}
-              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${
+              onClick={() => {
+                triggerHaptic("light");
+                setActiveFilter("kabar");
+              }}
+              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg select-none cursor-pointer transition-all active:scale-95 ${
                 activeFilter === "kabar"
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -177,8 +185,11 @@ export default function MediaPage({ loaderData }: Route.ComponentProps) {
               Kabar Dev
             </button>
             <button
-              onClick={() => setActiveFilter("blog")}
-              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${
+              onClick={() => {
+                triggerHaptic("light");
+                setActiveFilter("blog");
+              }}
+              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg select-none cursor-pointer transition-all active:scale-95 ${
                 activeFilter === "blog"
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -192,9 +203,9 @@ export default function MediaPage({ loaderData }: Route.ComponentProps) {
         {/* Featured Post (only shown when 'Semua' is active and posts exist) */}
         {activeFilter === "semua" && featuredPost && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={appleSprings.default}
             className="group relative grid grid-cols-1 lg:grid-cols-12 gap-8 items-center rounded-3xl border border-border/50 bg-card/60 backdrop-blur-md p-6 lg:p-8 editorial-shadow overflow-hidden"
           >
             <div className="lg:col-span-7 h-64 md:h-96 rounded-2xl overflow-hidden bg-muted relative">

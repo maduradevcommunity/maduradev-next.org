@@ -1,21 +1,22 @@
 import { motion, type Variants } from "motion/react";
 import { Send, Users } from "lucide-react";
 import { Link } from "react-router";
+import { appleSprings } from "@/lib/springs";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 },
+    transition: { staggerChildren: 0.08, delayChildren: 0.04 },
   },
 };
 
 const itemVariants: Variants = {
-  hidden: { y: 20, opacity: 0 },
+  hidden: { y: 16, opacity: 0 },
   visible: {
     y: 0,
     opacity: 1,
-    transition: { duration: 0.5 },
+    transition: appleSprings.default,
   },
 };
 
@@ -91,9 +92,9 @@ export default function HeroSection() {
         {/* Right Image Card */}
         <motion.div
           className="lg:col-span-5 relative"
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
+          transition={appleSprings.gentle}
         >
           <div className="aspect-square rounded-3xl overflow-hidden editorial-shadow bg-muted border border-border/50 relative group">
             <img
@@ -102,7 +103,7 @@ export default function HeroSection() {
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
             />
-            <div className="absolute bottom-6 left-6 right-6 p-6 glass-nav rounded-2xl border border-white/20 group-hover:backdrop-blur-md">
+            <div className="absolute bottom-2 left-6 right-6 p-6 glass-nav rounded-2xl border border-white/20 group-hover:backdrop-blur-md">
               <div className="flex items-center gap-4">
                 <div className="flex -space-x-3">
                   {[1, 2, 3].map((i) => (
