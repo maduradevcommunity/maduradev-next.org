@@ -67,7 +67,7 @@ export default function DashboardCommunitiesPage() {
           </Button>
         </div>
       ) : (
-        <div className="rounded-md border">
+        <div className="rounded-xl border border-border/70 bg-card/60 backdrop-blur-xs overflow-hidden shadow-xs">
           <Table>
             <TableHeader>
               <TableRow>

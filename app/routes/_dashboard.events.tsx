@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isEventNew } from "@/lib/event";
+import type { UserRole } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,18 +33,33 @@ export const meta: Route.MetaFunction = () => [
 
 export async function loader({ request }: Route.LoaderArgs) {
   const supabase = createClient(request);
-  const { data: events, error: eventsError } = await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const adminClient = createAdminClient();
+
+  let role: UserRole = "core_team";
+  if (user) {
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    if (profile?.role) role = profile.role;
+  }
+
+  const { data: events, error: eventsError } = await adminClient
     .from("events")
     .select("*")
     .order("created_at", { ascending: false });
 
   if (eventsError) {
     console.error("Error fetching events:", eventsError);
-    return { events: [] };
+    return { events: [], currentUserId: user?.id || null, role };
   }
 
   // Fetch event registrations count
-  const adminClient = createAdminClient();
   const { data: registrations, error: regError } = await adminClient
     .from("event_registrations")
     .select("event_id");
@@ -60,11 +76,11 @@ export async function loader({ request }: Route.LoaderArgs) {
     registrations_count: counts[event.id] || 0,
   }));
 
-  return { events: eventsWithCount };
+  return { events: eventsWithCount, currentUserId: user?.id || null, role };
 }
 
 export default function DashboardEventsPage() {
-  const { events } = useLoaderData<typeof loader>();
+  const { events, currentUserId, role } = useLoaderData<typeof loader>();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all"); // "all" | "upcoming" | "past"
 
@@ -163,7 +179,7 @@ export default function DashboardEventsPage() {
           )}
         </div>
       ) : (
-        <div className="rounded-md border bg-card">
+        <div className="rounded-xl border border-border/70 bg-card/60 backdrop-blur-xs overflow-hidden shadow-xs">
           <Table>
             <TableHeader>
               <TableRow>
@@ -228,28 +244,44 @@ export default function DashboardEventsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {event.rsvp_enabled && (
-                          <Button variant="ghost" size="icon" asChild title="Lihat RSVP Peserta">
-                            <Link to={`/dashboard/events/${event.id}`}>
-                              <Users className="h-4 w-4 text-primary" />
-                            </Link>
-                          </Button>
-                        )}
-                        {event.url && (
-                          <Button variant="ghost" size="icon" asChild title="Buka URL Event">
-                            <a href={event.url} target="_blank" rel="noopener">
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          </Button>
-                        )}
-                        <Button variant="ghost" size="icon" asChild title="Edit Event">
-                          <Link to={`/dashboard/events/${event.id}/edit`}>
-                            <Pencil className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <DeleteEventButton id={event.id} title={event.title} />
-                      </div>
+                      {(() => {
+                        const canManage = role === "admin" || (event.author_id && event.author_id === currentUserId);
+                        return (
+                          <div className="flex items-center justify-end gap-2">
+                            {event.rsvp_enabled && (
+                              <Button variant="ghost" size="icon" asChild title="Lihat RSVP Peserta">
+                                <Link to={`/dashboard/events/${event.id}`}>
+                                  <Users className="h-4 w-4 text-primary" />
+                                </Link>
+                              </Button>
+                            )}
+                            {event.url && (
+                              <Button variant="ghost" size="icon" asChild title="Buka URL Event">
+                                <a href={event.url} target="_blank" rel="noopener">
+                                  <ExternalLink className="h-4 w-4" />
+                                </a>
+                              </Button>
+                            )}
+                            {canManage ? (
+                              <>
+                                <Button variant="ghost" size="icon" asChild title="Edit Event">
+                                  <Link to={`/dashboard/events/${event.id}/edit`}>
+                                    <Pencil className="h-4 w-4" />
+                                  </Link>
+                                </Button>
+                                <DeleteEventButton id={event.id} title={event.title} />
+                              </>
+                            ) : (
+                              <span
+                                className="text-[11px] text-muted-foreground/50 px-2 py-1 italic select-none"
+                                title="Hanya pembuat atau Admin yang dapat mengedit/menghapus event ini"
+                              >
+                                Hanya Baca
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                   </TableRow>
                 );

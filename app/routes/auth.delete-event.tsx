@@ -26,16 +26,23 @@ export async function action({ request }: { request: Request }) {
     .eq("id", user.id)
     .single();
 
-  if (!profile || profile.role !== "admin") {
-    return { success: false, error: "Forbidden: Admin access required." };
-  }
-
-  // 1. Get the event's image_url to delete it from storage
+  // 1. Get the event data to verify ownership and clean up storage
   const { data: eventData } = await adminClient
     .from("events")
-    .select("image_url")
+    .select("*")
     .eq("id", id)
     .single();
+
+  if (!eventData) {
+    return { success: false, error: "Event tidak ditemukan." };
+  }
+
+  const isAdmin = profile?.role === "admin";
+  const isOwner = eventData.author_id && eventData.author_id === user.id;
+
+  if (!isAdmin && !isOwner) {
+    return { success: false, error: "Forbidden: Anda hanya dapat menghapus event karya Anda sendiri." };
+  }
 
   if (eventData?.image_url) {
     try {

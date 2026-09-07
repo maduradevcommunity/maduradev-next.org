@@ -1,8 +1,12 @@
 import { useTheme } from "@/lib/theme";
-import { Link } from "react-router";
 import { useEffect, useState } from "react";
 
-export default function ImageLogo() {
+interface ImageLogoProps {
+  className?: string;
+  size?: number;
+}
+
+export default function ImageLogo({ className = "h-7 w-7", size = 28 }: ImageLogoProps) {
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -16,21 +20,17 @@ export default function ImageLogo() {
   const currentTheme = theme === "system" ? "light" : theme;
   const imgUrl = currentTheme === "light" ? logo_light : logo_dark;
 
+  if (!mounted) {
+    return <div className={`animate-pulse bg-muted rounded-lg shrink-0 ${className}`} />;
+  }
+
   return (
-    <div className="relative overflow-hidden rounded w-[54px] h-[54px]">
-      <Link to="/">
-        {mounted ? (
-          <img
-            src={imgUrl}
-            alt="MaduraDev Logo"
-            width={64}
-            height={64}
-            className="object-cover transition-opacity duration-300 opacity-100 mt-2"
-          />
-        ) : (
-          <div className="animate-pulse bg-gray-300 dark:bg-gray-700 w-full h-full rounded" />
-        )}
-      </Link>
-    </div>
+    <img
+      src={imgUrl}
+      alt="MaduraDev Logo"
+      width={size}
+      height={size}
+      className={`object-contain shrink-0 ${className}`}
+    />
   );
 }

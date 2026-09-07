@@ -71,6 +71,29 @@ export function EditEventForm({ event }: EditEventFormProps) {
     const supabase = createClient();
     if (!supabase) { setLoading(false); return; }
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      toast.error("Sesi Anda berakhir, silakan login kembali.");
+      setLoading(false);
+      return;
+    }
+
+    if (event.author_id && event.author_id !== user.id) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+      if (profile?.role !== "admin") {
+        toast.error("Anda hanya dapat mengedit event karya Anda sendiri.");
+        setLoading(false);
+        return;
+      }
+    }
+
     const { is_paid, ...restFormData } = formData;
     const payload = {
       ...restFormData,

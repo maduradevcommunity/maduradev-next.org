@@ -77,14 +77,29 @@ export default function CreateEventPage() {
       return;
     }
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     const { is_paid, ...restFormData } = formData;
-    const payload = {
+    const payload: any = {
       ...restFormData,
       max_attendees: formData.rsvp_enabled && formData.max_attendees !== "" ? Number(formData.max_attendees) : null,
       price: formData.rsvp_enabled && formData.is_paid && formData.price !== "" ? Number(formData.price) : 0,
     };
 
-    const { error } = await supabase.from("events").insert([payload]);
+    if (user?.id) {
+      payload.author_id = user.id;
+    }
+
+    let { error } = await supabase.from("events").insert([payload]);
+
+    // Graceful fallback if author_id column is not yet migrated in Supabase table
+    if (error && (error.code === "42703" || error.message?.includes("author_id"))) {
+      const { author_id, ...fallbackPayload } = payload;
+      const retry = await supabase.from("events").insert([fallbackPayload]);
+      error = retry.error;
+    }
 
     if (error) {
       toast.error("Gagal membuat event: " + error.message);

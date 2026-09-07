@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { PanelLeftClose, PanelLeft } from "lucide-react";
+import { PanelLeftClose, PanelLeft, Menu, X } from "lucide-react";
 
 interface SidebarContextValue {
   open: boolean;
@@ -10,25 +10,41 @@ interface SidebarContextValue {
 
 export const SidebarContext = createContext<SidebarContextValue>({
   open: true,
-  toggle: () => {},
-  setOpen: () => {},
+  toggle: () => { },
+  setOpen: () => { },
   isMobile: false,
 });
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const toggle = useCallback(() => setOpen((prev) => !prev), []);
 
   useEffect(() => {
-    const check = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (mobile) setOpen(false);
+    let prevWidth = typeof window !== "undefined" ? window.innerWidth : 1024;
+    const initialMobile = window.innerWidth < 768;
+    setIsMobile(initialMobile);
+    // On mobile start closed, on desktop start open
+    setOpen(!initialMobile);
+
+    const handleResize = () => {
+      const currentWidth = window.innerWidth;
+      // Only act if the width actually changed (avoids mobile vertical scroll address bar triggers)
+      if (currentWidth !== prevWidth) {
+        const wasMobile = prevWidth < 768;
+        const nowMobile = currentWidth < 768;
+        prevWidth = currentWidth;
+        setIsMobile(nowMobile);
+        if (!wasMobile && nowMobile) {
+          setOpen(false);
+        } else if (wasMobile && !nowMobile) {
+          setOpen(true);
+        }
+      }
     };
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
@@ -43,13 +59,17 @@ export function SidebarInset({ children, className = "" }: { children: React.Rea
 }
 
 export function SidebarTrigger({ className = "" }: { className?: string }) {
-  const { open, toggle } = useContext(SidebarContext);
+  const { open, toggle, isMobile } = useContext(SidebarContext);
   return (
     <button
       onClick={toggle}
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${className}`}
+      title={open ? "Tutup Sidebar" : "Buka Sidebar"}
+      className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-card/60 text-muted-foreground hover:text-foreground hover:bg-muted/80 shadow-2xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${className}`}
     >
-      {open ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+      {isMobile ? (
+        open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />
+      ) : (
+        open ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />)}
       <span className="sr-only">Toggle Sidebar</span>
     </button>
   );
@@ -65,14 +85,14 @@ export function Sidebar({ children, className = "" }: { children: React.ReactNod
         {/* Backdrop */}
         {open && (
           <div
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
             onClick={() => setOpen(false)}
+            aria-hidden="true"
           />
         )}
         <aside
-          className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-sidebar-border bg-sidebar-background text-sidebar-foreground transition-transform duration-300 ${
-            open ? "translate-x-0" : "-translate-x-full"
-          } ${className}`}
+          className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-border bg-card text-foreground shadow-2xl transition-transform duration-300 ease-out ${open ? "translate-x-0" : "-translate-x-full"
+            } ${className}`}
         >
           {children}
         </aside>
@@ -82,9 +102,8 @@ export function Sidebar({ children, className = "" }: { children: React.ReactNod
 
   return (
     <aside
-      className={`sticky top-0 z-30 flex h-screen flex-shrink-0 flex-col border-r border-sidebar-border bg-sidebar-background text-sidebar-foreground transition-[width] duration-300 ${
-        open ? "w-64" : "w-16"
-      } ${className}`}
+      className={`sticky top-0 z-30 flex h-screen flex-shrink-0 flex-col border-r border-sidebar-border bg-sidebar-background text-sidebar-foreground transition-[width] duration-300 ${open ? "w-64" : "w-16"
+        } ${className}`}
     >
       {children}
     </aside>
@@ -153,11 +172,13 @@ export function SidebarMenuButton({
 }: SidebarMenuButtonProps) {
   const { open } = useContext(SidebarContext);
 
-  const buttonClass = `group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-    isActive
-      ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold shadow-sm"
-      : "text-sidebar-foreground/80 hover:text-sidebar-foreground"
-  } ${!open ? "justify-center px-0" : ""} ${className}`;
+  const defaultStateClass = isActive
+    ? "bg-primary text-white dark:text-primary-foreground font-semibold shadow-xs"
+    : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent";
+
+  const buttonClass = `group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-150 ${
+    !open ? "justify-center px-0" : ""
+  } ${className || defaultStateClass}`;
 
   if (asChild) {
     return (

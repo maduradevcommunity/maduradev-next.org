@@ -26,16 +26,23 @@ export async function action({ request }: { request: Request }) {
     .eq("id", user.id)
     .single();
 
-  if (!profile || profile.role !== "admin") {
-    return { success: false, error: "Forbidden: Admin access required." };
-  }
-
-  // 1. Get the post's image_url to delete it from storage
+  // 1. Get the post's author_id and image_url to verify ownership and clean up storage
   const { data: postData } = await adminClient
     .from("media_posts")
-    .select("image_url")
+    .select("image_url, author_id")
     .eq("id", id)
     .single();
+
+  if (!postData) {
+    return { success: false, error: "Artikel tidak ditemukan." };
+  }
+
+  const isAdmin = profile?.role === "admin";
+  const isOwner = postData.author_id && postData.author_id === user.id;
+
+  if (!isAdmin && !isOwner) {
+    return { success: false, error: "Forbidden: Anda hanya dapat menghapus artikel karya Anda sendiri." };
+  }
 
   if (postData?.image_url) {
     try {

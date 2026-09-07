@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link, useLoaderData } from "react-router";
+import { useNavigate, Link, useLoaderData, redirect } from "react-router";
 import { createClient } from "@/lib/supabase/client";
 import { createClient as createServerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getMediaPostById } from "@/lib/media";
 import type { Route } from "./+types/_dashboard.media.$id.edit";
 import { Button } from "@/components/ui/button";
@@ -38,17 +39,39 @@ export const meta = ({ data }: { data: any }) => [
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const supabase = createServerClient(request);
-  const post = await getMediaPostById(supabase, params.id);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw redirect("/login");
+  }
+
+  const adminClient = createAdminClient();
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const post = await getMediaPostById(adminClient, params.id);
 
   if (!post) {
     throw new Response("Artikel tidak ditemukan", { status: 404 });
   }
 
-  return { post };
+  const role = profile?.role ?? "core_team";
+  const isOwner = post.author_id && post.author_id === user.id;
+
+  if (role !== "admin" && !isOwner) {
+    throw redirect("/dashboard/media");
+  }
+
+  return { post, currentUserId: user.id, role };
 }
 
 export default function EditMediaPostPage() {
-  const { post } = useLoaderData<typeof loader>();
+  const { post, currentUserId, role } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
@@ -100,6 +123,13 @@ export default function EditMediaPostPage() {
     const supabase = createClient();
     if (!supabase) {
       toast.error("Supabase client tidak tersedia");
+      setLoading(false);
+      return;
+    }
+
+    // Ownership guard check
+    if (role !== "admin" && post.author_id !== currentUserId) {
+      toast.error("Anda hanya dapat mengedit artikel karya Anda sendiri.");
       setLoading(false);
       return;
     }

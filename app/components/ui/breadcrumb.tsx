@@ -13,8 +13,8 @@ export function BreadcrumbItem({ children, className = "" }: { children: React.R
   return <li className={`flex items-center gap-1.5 ${className}`}>{children}</li>;
 }
 
-export function BreadcrumbSeparator() {
-  return <ChevronRight className="h-4 w-4 text-muted-foreground" />;
+export function BreadcrumbSeparator({ className = "" }: { className?: string } = {}) {
+  return <ChevronRight className={`h-4 w-4 text-muted-foreground ${className}`} />;
 }
 
 export function BreadcrumbLink({ children, asChild, ...props }: { children: React.ReactNode; asChild?: boolean } & React.ComponentProps<typeof Link>) {

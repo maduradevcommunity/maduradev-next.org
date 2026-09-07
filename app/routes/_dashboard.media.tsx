@@ -1,8 +1,10 @@
 import type { Route } from "./+types/_dashboard.media";
 import { Link, useLoaderData } from "react-router";
 import { useState, useMemo } from "react";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAllMediaPosts } from "@/lib/media";
+import type { UserRole } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,21 +16,37 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, ExternalLink, Search, SlidersHorizontal, Newspaper } from "lucide-react";
+import { Plus, Pencil, ExternalLink, Search, SlidersHorizontal, Newspaper, Lock } from "lucide-react";
 import { DeleteMediaPostButton } from "@/components/dashboard/delete-media-post-button";
 
 export const meta: Route.MetaFunction = () => [
   { title: "Media - Dashboard MaduraDev" },
 ];
 
-export async function loader() {
-  const supabase = createAdminClient();
-  const posts = await getAllMediaPosts(supabase);
-  return { posts };
+export async function loader({ request }: Route.LoaderArgs) {
+  const supabase = createClient(request);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const adminClient = createAdminClient();
+  const posts = await getAllMediaPosts(adminClient);
+
+  let role: UserRole = "core_team";
+  if (user) {
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    if (profile?.role) role = profile.role;
+  }
+
+  return { posts, currentUserId: user?.id || null, role };
 }
 
 export default function DashboardMediaPage() {
-  const { posts } = useLoaderData<typeof loader>();
+  const { posts, currentUserId, role } = useLoaderData<typeof loader>();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all"); // "all" | "kabar" | "blog"
   const [statusFilter, setStatusFilter] = useState("all"); // "all" | "published" | "draft"
@@ -174,27 +192,43 @@ export default function DashboardMediaPage() {
                     {post.tanggal}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      {post.status === "published" && (
-                        <Button variant="ghost" size="icon" asChild title="Lihat Artikel">
-                          <a href={`/media/${post.slug}`} target="_blank" rel="noreferrer">
-                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                          </a>
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="icon" asChild title="Edit">
-                        <Link to={`/dashboard/media/${post.id}/edit`}>
-                          <Pencil className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <DeleteMediaPostButton
-                        id={post.id}
-                        title={post.title}
-                        onSuccess={() => {
-                          window.location.reload();
-                        }}
-                      />
-                    </div>
+                    {(() => {
+                      const canManage = role === "admin" || (post.author_id && post.author_id === currentUserId);
+                      return (
+                        <div className="flex items-center justify-end gap-1.5">
+                          {post.status === "published" && (
+                            <Button variant="ghost" size="icon" asChild title="Lihat Artikel">
+                              <a href={`/media/${post.slug}`} target="_blank" rel="noreferrer">
+                                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                              </a>
+                            </Button>
+                          )}
+                          {canManage ? (
+                            <>
+                              <Button variant="ghost" size="icon" asChild title="Edit Artikel">
+                                <Link to={`/dashboard/media/${post.id}/edit`}>
+                                  <Pencil className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                              <DeleteMediaPostButton
+                                id={post.id}
+                                title={post.title}
+                                onSuccess={() => {
+                                  window.location.reload();
+                                }}
+                              />
+                            </>
+                          ) : (
+                            <span
+                              className="text-[11px] text-muted-foreground/50 px-2 py-1 italic select-none"
+                              title="Hanya penulis atau Admin yang dapat mengedit/menghapus artikel ini"
+                            >
+                              Hanya Baca
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </TableCell>
                 </TableRow>
               ))

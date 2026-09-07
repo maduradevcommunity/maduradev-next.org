@@ -34,10 +34,10 @@ export async function loader({ request }: Route.LoaderArgs) {
       .eq("id", user.id)
       .single();
 
-    if (profile?.role === "admin") {
+    if (profile?.role === "admin" || profile?.role === "core_team") {
       throw redirect("/dashboard");
     }
-    throw redirect("/dashboard/profile");
+    throw redirect("/login");
   }
 
   return {};

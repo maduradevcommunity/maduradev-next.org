@@ -20,6 +20,10 @@ export const meta: Route.MetaFunction = () => [
   { title: "Dashboard - MaduraDev" },
 ];
 
+export function shouldRevalidate() {
+  return true;
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
   const supabase = createClient(request);
   const {
@@ -42,39 +46,53 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   const url = new URL(request.url);
+  const pathname = url.pathname.replace(/\/$/, "");
 
   if (profile.role === "core_team") {
-    const isEventPath = url.pathname.startsWith("/dashboard/events");
-    const isMediaPath = url.pathname.startsWith("/dashboard/media");
+    const isEventPath = pathname.startsWith("/dashboard/events");
+    const isMediaPath = pathname.startsWith("/dashboard/media");
 
     if (isEventPath && !profile.can_manage_events) {
-      throw redirect("/dashboard/profile");
+      throw redirect("/dashboard");
     }
     if (isMediaPath && !profile.can_manage_media) {
-      throw redirect("/dashboard/profile");
+      throw redirect("/dashboard");
     }
 
     const isStrictAdmin = [
       "/dashboard/team",
       "/dashboard/settings",
       "/dashboard/custom-domains",
-    ].some((path) => url.pathname.startsWith(path)) || url.pathname === "/dashboard";
+      "/dashboard/communities",
+    ].some((path) => pathname.startsWith(path));
 
     if (isStrictAdmin) {
-      throw redirect("/dashboard/profile");
+      throw redirect("/dashboard");
     }
   }
 
-  return { user, profile };
+  const { data: teamMember } = await adminClient
+    .from("core_team")
+    .select("name, avatar_url, position, is_active, description")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  return { user, profile, teamMember };
 }
 
 export default function DashboardLayout() {
   return (
     <SidebarProvider>
       <DashboardSidebar />
-      <SidebarInset>
+      <SidebarInset className="relative flex flex-col min-h-screen bg-background text-foreground overflow-hidden">
+        {/* Subtle Ambient Background Glow */}
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute -top-[20%] left-1/2 -translate-x-1/2 w-[900px] h-[450px] rounded-full bg-primary/5 blur-[130px] dark:bg-primary/10" />
+          <div className="absolute top-[40%] -right-24 w-[450px] h-[450px] rounded-full bg-accent/20 blur-[140px] dark:bg-accent/10" />
+        </div>
+
         <DashboardHeader />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-3.5 sm:p-6 lg:p-8">
           <div className="mx-auto w-full max-w-7xl">
             <Outlet />
           </div>

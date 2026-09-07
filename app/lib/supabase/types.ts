@@ -30,6 +30,7 @@ export interface Event {
   max_attendees: number | null;
   type: "internal" | "partner" | null;
   price: number | null;
+  author_id?: string | null;
   created_at?: string;
   updated_at?: string;
 }
